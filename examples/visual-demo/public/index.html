@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheus Visual Demo - Phase 4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-width: 500px;
+            max-width: 700px;
+        }
+
+        #counter-display {
+            min-height: 400px;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .controls h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #2563eb;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .version-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧬 Morpheus Visual Demo</h1>
+        <p>Phase 4: Interactive Component with Hot-Reload</p>
+    </div>
+
+    <div class="container">
+        <div id="counter-display">
+            <div style="padding: 40px; text-align: center; color: #64748b;">
+                Loading WASM module...
+            </div>
+        </div>
+
+        <div class="controls">
+            <h3>🔄 Hot-Reload Controls</h3>
+
+            <div class="control-group">
+                <button class="btn btn-primary" onclick="loadVersion1()">
+                    Load Version 1 (Blue)
+                </button>
+                <button class="btn btn-success" onclick="loadVersion2()">
+                    Load Version 2 (Green)
+                </button>
+                <button class="btn btn-danger" onclick="loadVersion3()">
+                    Load Version 3 (Animated)
+                </button>
+            </div>
+
+            <div id="status" class="status info">
+                Ready to load component...
+            </div>
+
+            <div class="version-info">
+                <strong>Current Version:</strong> <span id="current-version">None</span><br>
+                <strong>Loaded At:</strong> <span id="loaded-at">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let counter = null;
+        let currentVersion = 0;
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function updateVersionInfo(version) {
+            document.getElementById('current-version').textContent = version;
+            document.getElementById('loaded-at').textContent = new Date().toLocaleTimeString();
+            currentVersion = version;
+        }
+
+        // Simulate loading different versions
+        // In a real implementation, these would be different compiled WASM files
+
+        window.loadVersion1 = async function() {
+            updateStatus('Loading Version 1...', 'info');
+            try {
+                // This simulates hot-reloading the same component
+                // In Phase 4, we'd actually load different WASM modules
+                await loadWasm();
+                updateStatus('✓ Version 1 loaded successfully!', 'success');
+                updateVersionInfo(1);
+            } catch (e) {
+                updateStatus(`✗ Failed to load: ${e.message}`, 'error');
+            }
+        };
+
+        window.loadVersion2 = function() {
+            updateStatus('Version 2 would have different styling (green theme)', 'info');
+            updateVersionInfo(2);
+            // In real implementation: load v2.wasm
+        };
+
+        window.loadVersion3 = function() {
+            updateStatus('Version 3 would add animations and new features', 'info');
+            updateVersionInfo(3);
+            // In real implementation: load v3.wasm
+        };
+
+        async function loadWasm() {
+            try {
+                // Import the WASM module
+                const wasm = await import('./visual_demo.js');
+                await wasm.default();
+
+                // Create counter instance
+                counter = new wasm.Counter();
+
+                // Make it globally available for button clicks
+                window.counter = counter;
+
+                // Initial render
+                counter.render();
+
+                updateStatus('✓ WASM module loaded successfully!', 'success');
+                updateVersionInfo(1);
+            } catch (e) {
+                console.error('Failed to load WASM:', e);
+                updateStatus(`✗ Failed to load WASM: ${e.message}`, 'error');
+            }
+        }
+
+        // Auto-load on page load
+        loadWasm();
+    </script>
+</body>
+</html>

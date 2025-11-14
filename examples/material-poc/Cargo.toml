@@ -1,0 +1,19 @@
+[package]
+name = "material-poc"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+leptos = { version = "0.6", features = ["csr"] }
+material-leptos = "0.1"
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -102,35 +102,91 @@ serde_json = "1.0"
         Ok(project_dir)
     }
 
-    /// Parse rustc error output into structured errors.
+    /// Parse rustc error output into structured, user-friendly errors.
     fn parse_errors(stderr: &str) -> Vec<CompilationError> {
         let mut errors = Vec::new();
+        let mut current_error: Option<CompilationError> = None;
+        let mut help_text = String::new();
 
         for line in stderr.lines() {
-            // Simple parsing - look for "error:" or "warning:"
-            if line.contains("error:") {
-                errors.push(CompilationError {
-                    message: line.to_string(),
+            // Parse location: "  --> src/lib.rs:5:9"
+            if line.trim().starts_with("-->") {
+                if let Some(location) = line.split("-->").nth(1) {
+                    let parts: Vec<&str> = location.trim().split(':').collect();
+                    if parts.len() >= 3 {
+                        if let Some(ref mut err) = current_error {
+                            err.file = Some(parts[0].to_string());
+                            err.line = parts[1].parse().ok();
+                            err.column = parts[2].parse().ok();
+                        }
+                    }
+                }
+            }
+            // Parse error/warning message: "error[E0308]: mismatched types"
+            else if line.contains("error[") || line.contains("error:") {
+                // Save previous error if exists
+                if let Some(err) = current_error.take() {
+                    errors.push(Self::enrich_error(err, &help_text));
+                    help_text.clear();
+                }
+
+                // Extract error code and message
+                let message = if let Some(bracket_start) = line.find("[") {
+                    if let Some(bracket_end) = line.find("]:") {
+                        let error_code = &line[bracket_start+1..bracket_end];
+                        let error_message = &line[bracket_end+2..].trim();
+                        format!("{}: {}", error_code, error_message)
+                    } else {
+                        line.to_string()
+                    }
+                } else {
+                    line.to_string()
+                };
+
+                current_error = Some(CompilationError {
+                    message: Self::make_user_friendly(&message),
                     file: None,
                     line: None,
                     column: None,
                     severity: Severity::Error,
                 });
-            } else if line.contains("warning:") {
-                errors.push(CompilationError {
-                    message: line.to_string(),
+            }
+            else if line.contains("warning:") {
+                if let Some(err) = current_error.take() {
+                    errors.push(Self::enrich_error(err, &help_text));
+                    help_text.clear();
+                }
+
+                current_error = Some(CompilationError {
+                    message: Self::make_user_friendly(line),
                     file: None,
                     line: None,
                     column: None,
                     severity: Severity::Warning,
                 });
             }
+            // Collect help/note lines
+            else if line.trim().starts_with("help:") || line.trim().starts_with("note:") {
+                if !help_text.is_empty() {
+                    help_text.push_str("\n");
+                }
+                help_text.push_str(line.trim());
+            }
         }
 
-        // If no structured errors found, return the full stderr
+        // Save last error
+        if let Some(err) = current_error {
+            errors.push(Self::enrich_error(err, &help_text));
+        }
+
+        // If no structured errors found, return the full stderr with a friendly message
         if errors.is_empty() {
             errors.push(CompilationError {
-                message: stderr.to_string(),
+                message: format!(
+                    "The Rust compiler encountered an issue:\n\n{}\n\n\
+                    💡 This usually means there's a syntax error or type mismatch in the generated code.",
+                    stderr
+                ),
                 file: None,
                 line: None,
                 column: None,
@@ -139,6 +195,73 @@ serde_json = "1.0"
         }
 
         errors
+    }
+
+    /// Make error messages more user-friendly.
+    fn make_user_friendly(message: &str) -> String {
+        let message = message.to_string();
+
+        // Add explanations for common errors
+        if message.contains("mismatched types") {
+            format!(
+                "{}\n\n💡 The code is trying to use a value of one type where a different type is expected.",
+                message
+            )
+        } else if message.contains("cannot find") {
+            format!(
+                "{}\n\n💡 The code is referencing something that doesn't exist or wasn't imported.",
+                message
+            )
+        } else if message.contains("expected") && message.contains("found") {
+            format!(
+                "{}\n\n💡 The types don't match - check that variables and function returns have the correct types.",
+                message
+            )
+        } else if message.contains("unresolved import") {
+            format!(
+                "{}\n\n💡 The code is trying to import something that doesn't exist. Check the import path.",
+                message
+            )
+        } else if message.contains("unused") {
+            format!(
+                "{}\n\n💡 This is defined but never used. Consider removing it or using it somewhere.",
+                message
+            )
+        } else if message.contains("missing lifetime") {
+            format!(
+                "{}\n\n💡 Rust needs help understanding how long references live. This is an advanced feature.",
+                message
+            )
+        } else if message.contains("borrowed value") || message.contains("does not live long enough") {
+            format!(
+                "{}\n\n💡 The code is trying to use a reference that no longer exists. Try simplifying the ownership.",
+                message
+            )
+        } else if message.contains("trait") && message.contains("not implemented") {
+            format!(
+                "{}\n\n💡 The type needs to implement a trait (interface) to be used in this way.",
+                message
+            )
+        } else {
+            message
+        }
+    }
+
+    /// Enrich error with help text and suggestions.
+    fn enrich_error(mut error: CompilationError, help_text: &str) -> CompilationError {
+        if !help_text.is_empty() {
+            error.message = format!("{}\n\n{}", error.message, help_text);
+        }
+
+        // Add location context if available
+        if let (Some(line), Some(col)) = (error.line, error.column) {
+            error.message = format!(
+                "At line {}, column {}:\n{}",
+                line, col, error.message
+            );
+        }
+
+        error
     }
 }
 

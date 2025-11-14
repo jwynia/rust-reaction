@@ -419,4 +419,204 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_parse_errors_simple() {
+        let stderr = "error: expected `;`, found `}`";
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        assert!(!errors.is_empty());
+        assert!(errors[0].message.contains("error"));
+    }
+
+    #[test]
+    fn test_parse_errors_with_location() {
+        let stderr = r#"
+error[E0308]: mismatched types
+  --> src/lib.rs:5:9
+   |
+5  |     return x
+   |            ^ expected `String`, found `i32`
+        "#;
+
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].message.contains("E0308"));
+        assert!(errors[0].message.contains("mismatched types"));
+        assert_eq!(errors[0].file, Some("src/lib.rs".to_string()));
+        assert_eq!(errors[0].line, Some(5));
+        assert_eq!(errors[0].column, Some(9));
+        assert!(matches!(errors[0].severity, Severity::Error));
+    }
+
+    #[test]
+    fn test_parse_errors_with_help() {
+        let stderr = r#"
+error[E0308]: mismatched types
+  --> src/lib.rs:5:9
+   |
+5  |     return x
+   |            ^ expected `String`, found `i32`
+   |
+help: you can convert an `i32` to a `String`
+   |
+5  |     return x.to_string()
+        "#;
+
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].message.contains("help:"));
+        // The help text should be included
+        assert!(errors[0].message.contains("convert"));
+    }
+
+    #[test]
+    fn test_make_user_friendly_mismatched_types() {
+        let message = "E0308: mismatched types";
+        let friendly = SubprocessCompiler::make_user_friendly(message);
+
+        assert!(friendly.contains("💡"));
+        assert!(friendly.contains("one type where a different type is expected"));
+    }
+
+    #[test]
+    fn test_make_user_friendly_cannot_find() {
+        let message = "cannot find value `foo` in this scope";
+        let friendly = SubprocessCompiler::make_user_friendly(message);
+
+        assert!(friendly.contains("💡"));
+        assert!(friendly.contains("doesn't exist or wasn't imported"));
+    }
+
+    #[test]
+    fn test_make_user_friendly_unresolved_import() {
+        let message = "unresolved import `std::unknown`";
+        let friendly = SubprocessCompiler::make_user_friendly(message);
+
+        assert!(friendly.contains("💡"));
+        assert!(friendly.contains("import something that doesn't exist"));
+    }
+
+    #[test]
+    fn test_make_user_friendly_trait_not_implemented() {
+        let message = "the trait `Display` is not implemented for `MyType`";
+        let friendly = SubprocessCompiler::make_user_friendly(message);
+
+        assert!(friendly.contains("💡"));
+        assert!(friendly.contains("implement a trait"));
+    }
+
+    #[test]
+    fn test_enrich_error_with_help() {
+        let error = CompilationError {
+            message: "mismatched types".to_string(),
+            file: None,
+            line: None,
+            column: None,
+            severity: Severity::Error,
+        };
+
+        let help_text = "help: try using `.to_string()`";
+        let enriched = SubprocessCompiler::enrich_error(error, help_text);
+
+        assert!(enriched.message.contains("mismatched types"));
+        assert!(enriched.message.contains("help:"));
+        assert!(enriched.message.contains(".to_string()"));
+    }
+
+    #[test]
+    fn test_enrich_error_with_location() {
+        let error = CompilationError {
+            message: "type mismatch".to_string(),
+            file: Some("lib.rs".to_string()),
+            line: Some(42),
+            column: Some(10),
+            severity: Severity::Error,
+        };
+
+        let enriched = SubprocessCompiler::enrich_error(error, "");
+
+        assert!(enriched.message.contains("At line 42, column 10"));
+        assert!(enriched.message.contains("type mismatch"));
+    }
+
+    #[test]
+    fn test_parse_errors_multiple() {
+        let stderr = r#"
+error: expected identifier, found `1`
+  --> src/lib.rs:3:5
+
+error[E0425]: cannot find function `unknown` in this scope
+  --> src/lib.rs:7:9
+
+warning: unused variable: `x`
+  --> src/lib.rs:10:9
+        "#;
+
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        // Should have 2 errors and 1 warning
+        assert_eq!(errors.len(), 3);
+
+        let error_count = errors.iter().filter(|e| matches!(e.severity, Severity::Error)).count();
+        let warning_count = errors.iter().filter(|e| matches!(e.severity, Severity::Warning)).count();
+
+        assert_eq!(error_count, 2);
+        assert_eq!(warning_count, 1);
+    }
+
+    #[test]
+    fn test_parse_errors_empty_stderr() {
+        let stderr = "";
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        // Should return at least one error with the full stderr
+        assert!(!errors.is_empty());
+    }
+
+    #[test]
+    fn test_parse_errors_preserves_context() {
+        let stderr = r#"
+error[E0308]: mismatched types
+  --> src/lib.rs:12:5
+   |
+12 |     x
+   |     ^ expected `String`, found `i32`
+   |
+note: expected type `String`
+         found type `i32`
+help: you can convert an `i32` to a `String`
+        "#;
+
+        let errors = SubprocessCompiler::parse_errors(stderr);
+
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].message.contains("note:"));
+        assert!(errors[0].message.contains("help:"));
+    }
+
+    #[test]
+    fn test_compilation_error_severity() {
+        let error = CompilationError {
+            message: "test".to_string(),
+            file: None,
+            line: None,
+            column: None,
+            severity: Severity::Error,
+        };
+
+        assert!(matches!(error.severity, Severity::Error));
+
+        let warning = CompilationError {
+            message: "test".to_string(),
+            file: None,
+            line: None,
+            column: None,
+            severity: Severity::Warning,
+        };
+
+        assert!(matches!(warning.severity, Severity::Warning));
+    }
 }

@@ -190,6 +190,103 @@
             border-left: 4px solid #ef4444;
         }
 
+        .error-details {
+            margin-top: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .copy-error-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-error-btn:hover {
+            background: #2563eb;
+        }
+
+        .copy-error-btn.copied {
+            background: #10b981;
+        }
+
+        .progress-steps {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active {
+            opacity: 1;
+        }
+
+        .progress-step.complete {
+            opacity: 1;
+            color: #10b981;
+        }
+
+        .progress-step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .progress-step.active .progress-step-icon {
+            background: #fef3c7;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .progress-step.complete .progress-step-icon {
+            background: #d1fae5;
+        }
+
+        .progress-step-label {
+            font-size: 11px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .progress-step.active .progress-step-label {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
         .logs {
             margin-top: 20px;
             max-height: 300px;
@@ -386,12 +483,15 @@
                         placeholder="Examples:&#10;• Create a todo list with add and delete&#10;• Build a calculator with basic operations&#10;• Make a color picker that changes the background&#10;• Add a reset button to the counter">Create a counter with increment and decrement buttons</textarea>
 
                     <div class="examples">
-                        <p>Quick examples:</p>
+                        <p>💡 Try these examples:</p>
                         <span class="example-btn" onclick="setPrompt('Create a counter with increment and decrement buttons')">Counter</span>
                         <span class="example-btn" onclick="setPrompt('Build a todo list where I can add and remove items')">Todo List</span>
                         <span class="example-btn" onclick="setPrompt('Make a simple calculator with add, subtract, multiply, divide')">Calculator</span>
                         <span class="example-btn" onclick="setPrompt('Create a color picker with preview')">Color Picker</span>
                         <span class="example-btn" onclick="setPrompt('Build a timer with start, stop, and reset')">Timer</span>
+                        <span class="example-btn" onclick="setPrompt('Make a temperature converter between Celsius and Fahrenheit')">Temperature Converter</span>
+                        <span class="example-btn" onclick="setPrompt('Create a simple stopwatch')">Stopwatch</span>
+                        <span class="example-btn" onclick="setPrompt('Build a random number generator with min and max')">Random Number</span>
                     </div>
                 </div>
 
@@ -401,6 +501,27 @@
 
                 <div id="status" class="status info">
                     Ready! Enter a description and click "Generate with AI"
+                </div>
+
+                <div id="progress-container" style="display: none;">
+                    <div class="progress-steps">
+                        <div class="progress-step" id="step-ai">
+                            <div class="progress-step-icon">🤖</div>
+                            <div class="progress-step-label">AI Generation</div>
+                        </div>
+                        <div class="progress-step" id="step-compile">
+                            <div class="progress-step-icon">⚙️</div>
+                            <div class="progress-step-label">Compiling</div>
+                        </div>
+                        <div class="progress-step" id="step-load">
+                            <div class="progress-step-icon">📦</div>
+                            <div class="progress-step-label">Loading WASM</div>
+                        </div>
+                        <div class="progress-step" id="step-render">
+                            <div class="progress-step-icon">🎨</div>
+                            <div class="progress-step-label">Rendering</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="logs-container" style="display: none;">
@@ -562,6 +683,55 @@
             document.getElementById('state-json').textContent = JSON.stringify(currentState, null, 2);
         }
 
+        function setProgress(step) {
+            const progressContainer = document.getElementById('progress-container');
+            const steps = ['ai', 'compile', 'load', 'render'];
+
+            progressContainer.style.display = 'block';
+
+            steps.forEach((s, idx) => {
+                const el = document.getElementById(`step-${s}`);
+                el.classList.remove('active', 'complete');
+
+                if (s === step) {
+                    el.classList.add('active');
+                } else if (steps.indexOf(s) < steps.indexOf(step)) {
+                    el.classList.add('complete');
+                }
+            });
+        }
+
+        function hideProgress() {
+            document.getElementById('progress-container').style.display = 'none';
+        }
+
+        function displayError(errorMessage, errorDetails = null) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status error';
+            statusEl.innerHTML = `
+                <div>❌ ${errorMessage}</div>
+                ${errorDetails ? `
+                    <div class="error-details">
+                        <button class="copy-error-btn" onclick="copyError(this)">📋 Copy</button>
+                        ${errorDetails}
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function copyError(btn) {
+            const errorText = btn.parentElement.textContent.replace('📋 Copy', '').trim();
+            navigator.clipboard.writeText(errorText).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
         async function saveState() {
             try {
                 await fetch('/api/state', {
@@ -578,13 +748,14 @@
             const prompt = document.getElementById('user-prompt').value.trim();
 
             if (!prompt) {
-                setStatus('Please enter a description.', 'error');
+                displayError('Please enter a description');
                 return;
             }
 
             clearLogs();
             setButtonLoading(true);
-            setStatus('Sending to AI...', 'loading');
+            setProgress('ai');
+            setStatus('🤖 Sending request to AI...', 'loading');
 
             try {
                 const response = await fetch('/api/generate', {
@@ -592,6 +763,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt }),
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                setProgress('compile');
+                setStatus('⚙️ Compiling Rust code...', 'loading');
 
                 const data = await response.json();
 
@@ -601,7 +779,8 @@
                 }
 
                 if (data.success) {
-                    setStatus(`✅ Success! Generated in ${data.iterations} iteration(s)`, 'success');
+                    setProgress('load');
+                    setStatus('📦 Loading WASM module...', 'loading');
 
                     // Restore state if exists
                     if (data.restored_state) {
@@ -614,14 +793,29 @@
                     // Load WASM
                     await loadWasmComponent(data.wasm_base64);
 
+                    setProgress('render');
+                    setStatus(`✅ Success! Generated in ${data.iterations} iteration(s)`, 'success');
+
                     // Refresh history
                     loadHistory();
+
+                    setTimeout(() => {
+                        hideProgress();
+                    }, 2000);
                 } else {
-                    setStatus(`❌ Failed: ${data.error}`, 'error');
+                    hideProgress();
+                    displayError(
+                        'Compilation failed after multiple attempts',
+                        data.error || 'Unknown error'
+                    );
                 }
             } catch (error) {
                 console.error('Error:', error);
-                setStatus(`❌ Network error: ${error.message}`, 'error');
+                hideProgress();
+                displayError(
+                    'Network or server error',
+                    `${error.message}\n\nPlease check:\n• Server is running\n• Network connection\n• Browser console for details`
+                );
             } finally {
                 setButtonLoading(false);
             }

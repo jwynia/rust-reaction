@@ -90,9 +90,18 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+leptos = { version = "0.6", features = ["csr"] }
 wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlElement"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
 "#;
 
         fs::write(project_dir.join("Cargo.toml"), cargo_toml)

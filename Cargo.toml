@@ -9,6 +9,9 @@ members = [
     "examples/ai-playground",
     "examples/safety-demo",
     "examples/morpheus-complete",
+    "examples/leptos-poc",
+    "examples/thaw-poc",
+    # "examples/material-poc",  # Disabled - material-leptos doesn't exist
 ]
 resolver = "2"
 

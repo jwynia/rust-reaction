@@ -1,0 +1,28 @@
+Error: `cargo metadata` exited with an error: warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/leptos-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/thaw-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/material-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+    Updating crates.io index
+error: no matching package named `material-leptos` found
+location searched: crates.io index
+required by package `material-poc v0.1.0 (/home/user/rust-reaction/examples/material-poc)`
+
+Caused by: `cargo metadata` exited with an error: warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/leptos-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/thaw-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+warning: profiles for the non root package will be ignored, specify profiles at the workspace root:
+package:   /home/user/rust-reaction/examples/material-poc/Cargo.toml
+workspace: /home/user/rust-reaction/Cargo.toml
+    Updating crates.io index
+error: no matching package named `material-leptos` found
+location searched: crates.io index
+required by package `material-poc v0.1.0 (/home/user/rust-reaction/examples/material-poc)`
+

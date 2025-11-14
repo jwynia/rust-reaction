@@ -1,38 +1,32 @@
 [workspace]
 members = [
-    "crates/rust-reaction",
-    "examples/counter",
-    "examples/todo-app",
+    "crates/morpheus-core",
+    "crates/morpheus-compiler",
+    "crates/morpheus-runtime",
 ]
 resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Rust Reaction Contributors"]
+authors = ["Morpheus Contributors"]
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-# Web platform
-wasm-bindgen = "0.2"
-web-sys = { version = "0.3", features = [
-    "Document",
-    "Element",
-    "HtmlElement",
-    "Node",
-    "Window",
-    "Event",
-    "EventTarget",
-    "MouseEvent",
-    "InputEvent",
-    "HtmlInputElement",
-    "HtmlButtonElement",
-] }
-js-sys = "0.3"
-
-# Error handling
+# Core dependencies
 thiserror = "2.0"
 anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
-# Utilities
-once_cell = "1.20"
+# WASM
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3" }
+js-sys = "0.3"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+
+# For compiler integration (TBD - may need cargo-wasm or similar)
+# Will research options for runtime Rust compilation

@@ -1,0 +1,21 @@
+[package]
+name = "morpheus-compiler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Rust-to-WASM compiler integration for Morpheus"
+
+[dependencies]
+morpheus-core = { path = "../morpheus-core" }
+thiserror.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+async-trait.workspace = true
+
+# TODO: Research best approach for runtime Rust compilation
+# Options:
+# - Spawn rustc/wasm-pack as subprocess
+# - Use cargo as library
+# - Integrate with wasm-bindgen directly
+# - Use a Rust interpreter/JIT

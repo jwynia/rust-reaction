@@ -1,44 +1,255 @@
-# Bare Context Network
-This project is a starter template for a generic context-network (more info at https://jwynia.github.io/context-networks/). It can be used as a collaboration context manager for a wide range of projects. They are used for software projects, writing projects of all kinds (fiction, non-fiction, marketing, technical, etc.), building knowledge bases, managing research and analysis and more.
+# Morpheus - Self-Modifying Applications with AI
 
-This particular template repository is generic so that it isn't aimed at any one of those project types. Other templates exist (or will soon) that are aimed at common project types. Look at those and use one if it seems like a good match. But, if not, use this one.
+**Build applications that users can safely modify through natural language conversation with AI agents.**
 
-## Getting Started
-Context networks are intended to be used with an LLM agent that has file access to all of the files in the project folder. For people in software development professions, that can be agents they write. But, for most people, the easiest access to such agents is via IDE coding tools.
+## The Problem
 
-Set up the prompts (see below) and start a planning conversation and describe your project, your goals, your constraints, etc. When the plan looks good, let it enhance the context network. Then start with real tasks for the project.
+You're building an app. A user says: *"Add a dark mode toggle to settings."*
 
-## Cost
-Because context networks are a relatively cutting-edge approach to collaboration with LLM AI agents, these tools do cost money and some of the best of them can cost more money than you may be expecting. The costs on such things are dropping and much of what we're doing with context networks is figuring out the ways to work that will be more widespread next year and beyond, when these costs drop. If these tools are too expensive for your budget, that probably means you need to wait a bit.
+**In TypeScript/JavaScript:**
+```typescript
+// AI generates code, eval() runs it
+eval(aiGeneratedCode);  // 🔥 What could go wrong?
 
-## Tools
-Cursor (https://www.cursor.com/) is an all-in-one that comes with LLM chat and an agent that can act on the files.
+// Everything:
+// - Type errors at runtime (app crashes)
+// - Can corrupt global state
+// - No sandboxing (security risk)
+// - Breaks the modification tool itself
+// - No way to undo
+```
 
-Cursor is built on VSCode (https://code.visualstudio.com/), which is a more generic code/text editor that can have plugins added. One we use a lot with context networks is Cline (https://cline.bot/). Cline's agent can be pointed at a wide range of LLM APIs that you use your own keys/billing for or their own management of that. A popular solution is to use OpenRouter (https://openrouter.ai/) which lets you use most of the LLM models available today.
+**You've experienced this:** CLI agents with MCP servers where a syntax error means the agent won't load, so you can't even use it to fix the problem. Recursive failure.
 
-## Patterns
-### Prompts
-For whatever agent you use, you need to include instructions in the system prompt or custom instructions that tell it about context networks and how to navigate them. The prompt in /inbox/custom-instructions-prompt.md is the one a lot of people are using for Cline with Claude Sonnet as the model.
+**In Rust with Morpheus:**
+```rust
+// AI generates Rust code
+let modification = ai.generate("Add dark mode toggle");
 
-Add it in either your agent's configuration screen or via it's file-based prompt management system.
+// Framework compiles it BEFORE running
+match compiler.compile(&modification) {
+    Ok(wasm) => {
+        // Type-checked! Safe to load.
+        app.hot_reload(wasm);
+    }
+    Err(errors) => {
+        // App still works! Show errors, AI can fix them.
+        show_user("AI made a mistake: {}", errors);
+        ai.fix_errors(&modification, errors);
+    }
+}
+```
 
-### Plan/Act and Specific Scope
-Cline and many other agents have multiple modes, usually offering one that lets you have a conversation with it separate from it taking action on files. In Cline, that's "Plan". In that mode, it won't make any changes to your files.
+## Why Rust?
 
-Use that mode aggressively to get to a specific plan for what will happen when you toggle to act. That plan should have a clear definition of what "done" will look like, should be as close to a single action as possible.
+Rust provides **5 critical safety mechanisms** TypeScript can't:
 
-That often means that the action is to detail out a list of tasks that you'll actually have the agent do separately, one at a time. The "do one thing" can mean break the existing scope down another level to get to a more detailed plan. 
+### 1. **Compilation as Safety Gate** 🛡️
+AI-generated code must type-check before it can run. No runtime type surprises.
 
-Basically, the more specific the action that Act mode or its equivalent is given, the better job it will do at managing token budget, at not volunteering to do a bunch of extra things,  and the more likely it does something you've already had a chance to approve.
+### 2. **Ownership = Isolation** 🔒
+Components own their state. AI-generated code can't accidentally corrupt other components or global state.
 
-### Monitor and Interrupt
-The more you actually read and monitor what your agent is doing for anything that you disagree with or sounds incorrect and step in to interrupt, the better your context network will mature. Like hiring a new assistant, where for the first few weeks, you have to tell them your preferences and ways you want things done, it pays off over the long haul.
+### 3. **WASM Sandboxing** 📦
+AI-generated components run in isolated WASM modules with restricted permissions. Can't steal data or attack the system.
 
-Interrupt, flip to Plan mode, and ask things like:
+### 4. **Atomic Rollback** ⏮️
+All modifications are transactional. If something breaks, undo instantly and atomically.
 
-* How can we document into the context network a way of working so we don't repeat (the problem/misunderstanding above)?
-* I'd really prefer we always write out a plan with tasks before doing things ad hoc. How can we clarify what's in the context network to make that our process going forward?
+### 5. **Type-Safe Hot Reload** 🔄
+New component versions must satisfy interface contracts. Can't break existing functionality.
 
+## User Experience
 
-### Retrospective
-At the end of tasks and periodically AS a new task, ask how things could be improved. For task end, "What from this conversation and task should be documented in the context network?" For periodic retrospectives, "What have we learned in this project that could be used to improve the context network for our efforts going forward?"
+```
+User: "Add a dark mode toggle to settings"
+  ↓
+AI: Generates Rust code for DarkModeToggle component
+  ↓
+Morpheus: Compiles to WASM (type-checks!)
+  ↓
+Morpheus: Shows preview in sandbox
+  ↓
+User: "Make the toggle bigger"
+  ↓
+AI: Modifies the component
+  ↓
+Morpheus: Re-compiles, updates preview
+  ↓
+User: "Perfect! Apply it"
+  ↓
+Morpheus: Hot-reloads into live app
+  ↓
+[User continues using app with new feature]
+  ↓
+User: "Actually, undo that"
+  ↓
+Morpheus: Rolls back atomically (instant!)
+```
+
+## Architecture
+
+```rust
+pub struct MorpheusApp {
+    // Dynamic components loaded as WASM modules
+    components: ComponentRegistry,
+
+    // Rust compiler (validates AI code)
+    compiler: RustToWasmCompiler,
+
+    // AI agent integration
+    ai: LLMAgent,
+
+    // Versioned state for rollback
+    state: VersionedState,
+
+    // Type system enforces compatibility
+    types: TypeRegistry,
+}
+
+impl MorpheusApp {
+    pub async fn modify(&mut self, user_request: &str) -> Result<()> {
+        // 1. AI generates Rust code
+        let code = self.ai.generate(user_request).await?;
+
+        // 2. Compile to WASM (type-check!)
+        let wasm = self.compiler.compile(&code)?;
+
+        // 3. Take snapshot for rollback
+        let snapshot = self.state.snapshot();
+
+        // 4. Hot-reload safely
+        match self.hot_reload(wasm) {
+            Ok(_) => self.state.commit(snapshot),
+            Err(e) => {
+                self.state.rollback(snapshot);
+                Err(e)
+            }
+        }
+    }
+}
+```
+
+## Project Status
+
+**Current Phase:** Architecture & Proof of Concept
+
+This project is actively exploring:
+- Runtime Rust compilation for AI-generated code
+- WASM component hot-reloading
+- Safe sandboxing of untrusted components
+- Transactional state management
+- AI agent integration patterns
+
+**Not production-ready yet.** This is research and development to prove the concept.
+
+## Repository Structure
+
+```
+morpheus/
+├── crates/
+│   ├── morpheus-core/         # Core framework (coming soon)
+│   ├── morpheus-compiler/     # Rust-to-WASM compiler integration
+│   └── morpheus-runtime/      # Dynamic component loader & hot-reload
+├── examples/
+│   └── ai-modifiable-counter/ # Demo: counter that AI can enhance
+├── context-network/           # Research, decisions, analysis
+│   ├── research/              # Analysis of existing frameworks
+│   ├── decisions/             # Key architectural decisions
+│   ├── use-cases/             # Self-modifying apps analysis
+│   └── planning/              # Implementation strategy
+└── archive/
+    └── prototype-v1/          # Initial exploration (static UI patterns)
+```
+
+## Why This is Different from Yew/Leptos/Dioxus
+
+**Existing frameworks answer:** "How do I build web apps in Rust?"
+
+**Morpheus answers:** "How do I build apps that safely modify themselves with AI?"
+
+| Aspect | Traditional Frameworks | Morpheus |
+|--------|----------------------|----------|
+| **Use Case** | Static app development | Runtime AI modification |
+| **Compilation** | Once, at build time | Continuously, at runtime |
+| **Code Source** | Human developers | AI agents + humans |
+| **Safety** | Compile-time only | Compile + runtime verification |
+| **Components** | Bundled, fixed | Dynamic WASM modules |
+| **Rollback** | Git/deploy | Real-time undo in app |
+| **Sandboxing** | Not needed | Essential |
+| **Type Checking** | Development time | Generation time |
+
+**This is complementary, not competitive.** Morpheus could even build on Yew/Leptos for base UI primitives.
+
+## The Real-World Problem This Solves
+
+**You've hit this:**
+- CLI coding agents with MCP servers
+- Syntax error in plugin
+- Agent won't load
+- Can't use the agent to fix it
+- Stuck!
+
+**Morpheus solves the recursive failure:**
+```rust
+// Plugin modification fails to compile
+match compile_plugin(&ai_plugin) {
+    Err(errors) => {
+        // Agent STILL WORKS!
+        // Can show errors and try again
+        show_errors(errors);
+        ai.fix_and_retry(errors);
+    }
+}
+```
+
+The tool for modifying can't break itself.
+
+## Documentation
+
+All research, decisions, and analysis are in `context-network/`:
+
+- **[Self-Modifying Apps Use Case](context-network/elements/use-cases/self-modifying-apps.md)** - Detailed problem analysis
+- **[Strategic Pivot Decision](context-network/decisions/002-self-modifying-apps-pivot.md)** - Why we're building this
+- **[Framework Differentiation](context-network/planning/framework-differentiation-analysis.md)** - How this differs from existing work
+- **[Critical Evaluation](context-network/planning/critical-evaluation.md)** - Honest assessment of challenges
+
+## Next Steps
+
+1. **Prove the concept** - Build minimal compiler integration
+2. **WASM hot-reload demo** - Show it's technically feasible
+3. **AI integration** - Connect to LLM for code generation
+4. **Basic UI** - Counter that AI can enhance
+5. **Iterate** - Learn from real use
+
+## Contributing
+
+This is early-stage research. If you're interested in:
+- Self-modifying applications
+- AI-assisted development
+- Safe code generation
+- Runtime compilation
+- WASM sandboxing
+
+...we'd love to hear your thoughts and ideas!
+
+## Related Work
+
+**Research that informed this:**
+- Prototype V1 exploration of Rust-native UI patterns (see `archive/`)
+- Analysis of Yew, Leptos, Dioxus frameworks
+- Study of what makes frameworks worth existing
+- Understanding of Rust's safety guarantees for UI development
+
+**Existing frameworks we respect and learn from:**
+- [Yew](https://yew.rs/) - Mature Rust web framework
+- [Leptos](https://leptos.dev/) - Full-stack with fine-grained reactivity
+- [Dioxus](https://dioxuslabs.com/) - Cross-platform Rust apps
+
+## License
+
+MIT OR Apache-2.0
+
+## Name Origin
+
+**Morpheus** - From Greek mythology, the god of dreams who could take any form. Fitting for applications that transform themselves through user imagination and AI collaboration.

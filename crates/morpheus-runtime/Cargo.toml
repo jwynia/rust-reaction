@@ -1,0 +1,18 @@
+[package]
+name = "morpheus-runtime"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Dynamic component loader and hot-reload runtime for Morpheus"
+
+[dependencies]
+morpheus-core = { path = "../morpheus-core" }
+morpheus-compiler = { path = "../morpheus-compiler" }
+thiserror.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+wasm-bindgen.workspace = true
+web-sys.workspace = true
+js-sys.workspace = true

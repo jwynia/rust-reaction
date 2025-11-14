@@ -3,6 +3,7 @@ members = [
     "crates/morpheus-core",
     "crates/morpheus-compiler",
     "crates/morpheus-runtime",
+    "examples/compiler-test",
 ]
 resolver = "2"
 

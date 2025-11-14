@@ -16,3 +16,6 @@ serde_json.workspace = true
 wasm-bindgen.workspace = true
 web-sys.workspace = true
 js-sys.workspace = true
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["rt", "macros"] }

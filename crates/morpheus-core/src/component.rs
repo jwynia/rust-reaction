@@ -89,3 +89,248 @@ pub struct ComponentMetadata {
     /// Whether this component was AI-generated.
     pub ai_generated: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_component_id_display() {
+        let id = ComponentId(12345);
+        let display = format!("{}", id);
+
+        // Should be 16-character hex
+        assert_eq!(display.len(), 16);
+        assert_eq!(display, "0000000000003039");
+    }
+
+    #[test]
+    fn test_component_id_equality() {
+        let id1 = ComponentId(100);
+        let id2 = ComponentId(100);
+        let id3 = ComponentId(200);
+
+        assert_eq!(id1, id2);
+        assert_ne!(id1, id3);
+    }
+
+    #[test]
+    fn test_component_id_serialization() {
+        let id = ComponentId(42);
+
+        let json = serde_json::to_string(&id).expect("Failed to serialize");
+        let deserialized: ComponentId =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(id, deserialized);
+    }
+
+    #[test]
+    fn test_component_metadata_serialization() {
+        let metadata = ComponentMetadata {
+            id: ComponentId(999),
+            name: "TestComponent".to_string(),
+            version: 3,
+            loaded_at: "2025-01-01T10:30:00Z".to_string(),
+            ai_generated: true,
+        };
+
+        let json = serde_json::to_string(&metadata).expect("Failed to serialize");
+        let deserialized: ComponentMetadata =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        assert_eq!(deserialized.id, metadata.id);
+        assert_eq!(deserialized.name, metadata.name);
+        assert_eq!(deserialized.version, metadata.version);
+        assert_eq!(deserialized.loaded_at, metadata.loaded_at);
+        assert_eq!(deserialized.ai_generated, metadata.ai_generated);
+    }
+
+    #[test]
+    fn test_view_element_creation() {
+        let view = View::Element {
+            tag: "div".to_string(),
+            attrs: vec![("class".to_string(), "container".to_string())],
+            children: vec![],
+        };
+
+        match view {
+            View::Element { tag, attrs, .. } => {
+                assert_eq!(tag, "div");
+                assert_eq!(attrs.len(), 1);
+                assert_eq!(attrs[0].0, "class");
+                assert_eq!(attrs[0].1, "container");
+            }
+            _ => panic!("Expected Element variant"),
+        }
+    }
+
+    #[test]
+    fn test_view_text_creation() {
+        let view = View::Text("Hello, world!".to_string());
+
+        match view {
+            View::Text(content) => {
+                assert_eq!(content, "Hello, world!");
+            }
+            _ => panic!("Expected Text variant"),
+        }
+    }
+
+    #[test]
+    fn test_view_nested_structure() {
+        let view = View::Element {
+            tag: "div".to_string(),
+            attrs: vec![("id".to_string(), "root".to_string())],
+            children: vec![
+                View::Element {
+                    tag: "h1".to_string(),
+                    attrs: vec![],
+                    children: vec![View::Text("Title".to_string())],
+                },
+                View::Element {
+                    tag: "p".to_string(),
+                    attrs: vec![("class".to_string(), "content".to_string())],
+                    children: vec![View::Text("Paragraph text".to_string())],
+                },
+            ],
+        };
+
+        match view {
+            View::Element {
+                tag,
+                children,
+                ..
+            } => {
+                assert_eq!(tag, "div");
+                assert_eq!(children.len(), 2);
+
+                // Check first child (h1)
+                match &children[0] {
+                    View::Element {
+                        tag,
+                        children,
+                        ..
+                    } => {
+                        assert_eq!(tag, "h1");
+                        assert_eq!(children.len(), 1);
+                        match &children[0] {
+                            View::Text(text) => assert_eq!(text, "Title"),
+                            _ => panic!("Expected Text in h1"),
+                        }
+                    }
+                    _ => panic!("Expected Element for h1"),
+                }
+
+                // Check second child (p)
+                match &children[1] {
+                    View::Element {
+                        tag,
+                        children,
+                        attrs,
+                    } => {
+                        assert_eq!(tag, "p");
+                        assert_eq!(attrs[0].0, "class");
+                        assert_eq!(children.len(), 1);
+                    }
+                    _ => panic!("Expected Element for p"),
+                }
+            }
+            _ => panic!("Expected Element at root"),
+        }
+    }
+
+    #[test]
+    fn test_view_serialization() {
+        let view = View::Element {
+            tag: "button".to_string(),
+            attrs: vec![
+                ("class".to_string(), "btn".to_string()),
+                ("disabled".to_string(), "true".to_string()),
+            ],
+            children: vec![View::Text("Click me".to_string())],
+        };
+
+        let json = serde_json::to_string(&view).expect("Failed to serialize");
+        let deserialized: View =
+            serde_json::from_str(&json).expect("Failed to deserialize");
+
+        match deserialized {
+            View::Element {
+                tag,
+                attrs,
+                children,
+            } => {
+                assert_eq!(tag, "button");
+                assert_eq!(attrs.len(), 2);
+                assert_eq!(children.len(), 1);
+            }
+            _ => panic!("Expected Element variant"),
+        }
+    }
+
+    #[test]
+    fn test_view_clone() {
+        let view = View::Element {
+            tag: "span".to_string(),
+            attrs: vec![],
+            children: vec![View::Text("content".to_string())],
+        };
+
+        let cloned = view.clone();
+
+        // Should be equal after cloning
+        match (&view, &cloned) {
+            (
+                View::Element { tag: t1, .. },
+                View::Element { tag: t2, .. },
+            ) => {
+                assert_eq!(t1, t2);
+            }
+            _ => panic!("Clone should preserve structure"),
+        }
+    }
+
+    #[test]
+    fn test_view_complex_attributes() {
+        let view = View::Element {
+            tag: "input".to_string(),
+            attrs: vec![
+                ("type".to_string(), "text".to_string()),
+                ("placeholder".to_string(), "Enter name".to_string()),
+                ("required".to_string(), "true".to_string()),
+                ("maxlength".to_string(), "50".to_string()),
+            ],
+            children: vec![],
+        };
+
+        match view {
+            View::Element { attrs, .. } => {
+                assert_eq!(attrs.len(), 4);
+                assert!(attrs.iter().any(|(k, _)| k == "type"));
+                assert!(attrs.iter().any(|(k, _)| k == "placeholder"));
+                assert!(attrs.iter().any(|(k, v)| k == "required" && v == "true"));
+            }
+            _ => panic!("Expected Element variant"),
+        }
+    }
+
+    #[test]
+    fn test_component_metadata_versioning() {
+        let mut metadata = ComponentMetadata {
+            id: ComponentId(1),
+            name: "MyComponent".to_string(),
+            version: 0,
+            loaded_at: "2025-01-01T00:00:00Z".to_string(),
+            ai_generated: false,
+        };
+
+        assert_eq!(metadata.version, 0);
+
+        metadata.version += 1;
+        assert_eq!(metadata.version, 1);
+
+        metadata.version += 1;
+        assert_eq!(metadata.version, 2);
+    }
+}

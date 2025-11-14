@@ -1,15 +1,17 @@
-//! Leptos Proof of Concept (Simplified - without Leptonic for now)
+//! Leptos + Tailwind CSS Proof of Concept
 //!
-//! Testing base Leptos compilation before adding component library.
-//! Once this works, we'll add Leptonic.
+//! Demonstrates AI-friendly component generation using:
+//! - Leptos 0.6 for reactive components
+//! - Tailwind CSS for utility-first styling
+//! - No inline styles - all styling via Tailwind classes
 
 use leptos::*;
 use wasm_bindgen::prelude::*;
 
-/// Counter component using basic Leptos (no component library yet)
+/// Counter component using Leptos + Tailwind CSS
 #[component]
 pub fn Counter() -> impl IntoView {
-    // Leptos reactive state (no cx parameter in 0.6!)
+    // Leptos reactive state
     let (count, set_count) = create_signal(0);
 
     // Event handlers
@@ -17,59 +19,59 @@ pub fn Counter() -> impl IntoView {
     let decrement = move |_| set_count.update(|n| *n -= 1);
     let reset = move |_| set_count.set(0);
 
-    // View using basic Leptos HTML elements (no cx in 0.6!)
+    // View using Tailwind utility classes
     view! {
-        <div style="padding: 40px; max-width: 600px; margin: 0 auto;">
-            <div style="margin-bottom: 30px;">
-                <h1 style="font-size: 72px; text-align: center; color: #2563eb; margin: 20px 0;">
+        <div class="p-10 max-w-2xl mx-auto">
+            // Counter Display
+            <div class="mb-8">
+                <h1 class="text-7xl text-center text-blue-600 my-5">
                     {move || count.get()}
                 </h1>
-                <p style="text-align: center; color: #64748b; font-size: 18px;">
+                <p class="text-center text-slate-600 text-lg">
                     "Counter Value"
                 </p>
             </div>
 
-            <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px;">
+            // Button Controls
+            <div class="flex gap-3 justify-center mb-8">
                 <button
                     on:click=decrement
-                    style="padding: 12px 24px; font-size: 16px; background: #ef4444; color: white;
-                           border: none; border-radius: 6px; cursor: pointer;">
+                    class="px-6 py-3 text-base bg-red-500 text-white border-0 rounded-lg cursor-pointer hover:bg-red-600 transition-colors">
                     "- Decrement"
                 </button>
 
                 <button
                     on:click=reset
-                    style="padding: 12px 24px; font-size: 16px; background: #6b7280; color: white;
-                           border: none; border-radius: 6px; cursor: pointer;">
+                    class="px-6 py-3 text-base bg-gray-500 text-white border-0 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors">
                     "Reset"
                 </button>
 
                 <button
                     on:click=increment
-                    style="padding: 12px 24px; font-size: 16px; background: #10b981; color: white;
-                           border: none; border-radius: 6px; cursor: pointer;">
+                    class="px-6 py-3 text-base bg-green-500 text-white border-0 rounded-lg cursor-pointer hover:bg-green-600 transition-colors">
                     "+ Increment"
                 </button>
             </div>
 
-            <div style="margin-top: 40px; padding: 20px; background: #f1f5f9;
-                        border-radius: 8px; border-left: 4px solid #2563eb;">
-                <p style="margin: 0; color: #1e293b; font-weight: 500;">
-                    "🧬 Morpheus Counter - Leptos Edition"
+            // Info Alert
+            <div class="mt-10 p-5 bg-slate-100 rounded-lg border-l-4 border-blue-600">
+                <p class="m-0 text-slate-900 font-medium">
+                    "🧬 Morpheus Counter - Leptos + Tailwind Edition"
                 </p>
-                <p style="margin: 8px 0 0 0; color: #64748b; font-size: 14px;">
-                    "This component uses Leptos framework and can be hot-reloaded!"
+                <p class="mt-2 mb-0 text-slate-600 text-sm">
+                    "This component uses Leptos framework with Tailwind CSS and can be hot-reloaded!"
                 </p>
             </div>
 
-            <div style="margin-top: 20px; padding: 20px; background: white;
-                        border-radius: 8px; border: 1px solid #e2e8f0;">
-                <h3 style="margin: 0 0 12px 0; color: #1e293b;">"Why This is Better"</h3>
-                <ul style="margin: 0; padding-left: 20px; color: #64748b;">
+            // Benefits Card
+            <div class="mt-5 p-5 bg-white rounded-lg border border-slate-200">
+                <h3 class="mt-0 mb-3 text-slate-900">"Why This is Better"</h3>
+                <ul class="m-0 pl-5 text-slate-600">
                     <li>"✅ Structured Leptos components"</li>
                     <li>"✅ Reactive signals for state"</li>
                     <li>"✅ Type-safe event handlers"</li>
-                    <li>"✅ Ready for component library (Leptonic, etc.)"</li>
+                    <li>"✅ Tailwind CSS utility classes (AI-friendly!)"</li>
+                    <li>"✅ No inline styles - clean and maintainable"</li>
                 </ul>
             </div>
         </div>

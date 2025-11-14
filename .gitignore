@@ -19,6 +19,7 @@ Thumbs.db
 # WASM build artifacts
 pkg/
 wasm-pack.log
+*.log
 
 # Node modules (if using for serving examples)
 node_modules/

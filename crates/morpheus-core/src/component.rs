@@ -65,6 +65,12 @@ pub enum View {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ComponentId(pub u64);
 
+impl std::fmt::Display for ComponentId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:016x}", self.0)
+    }
+}
+
 /// Metadata about a component.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentMetadata {

@@ -39,16 +39,16 @@ pub mod wasm_loader;
 
 pub use wasm_loader::WasmComponent;
 
-use morpheus_core::prelude::*;
+use morpheus_core::component::{ComponentId, ComponentMetadata};
 use std::collections::HashMap;
 
 /// Registry of dynamically loaded components.
 pub struct ComponentRegistry {
     /// Loaded components by ID.
-    components: HashMap<String, WasmComponent>,
+    components: HashMap<ComponentId, WasmComponent>,
 
     /// Component metadata.
-    metadata: HashMap<String, ComponentMetadata>,
+    metadata: HashMap<ComponentId, ComponentMetadata>,
 }
 
 impl ComponentRegistry {
@@ -61,23 +61,23 @@ impl ComponentRegistry {
     }
 
     /// Register a loaded component.
-    pub fn register(&mut self, id: String, component: WasmComponent, metadata: ComponentMetadata) {
-        self.components.insert(id.clone(), component);
+    pub fn register(&mut self, id: ComponentId, component: WasmComponent, metadata: ComponentMetadata) {
+        self.components.insert(id, component);
         self.metadata.insert(id, metadata);
     }
 
     /// Get a component by ID.
-    pub fn get(&self, id: &str) -> Option<&WasmComponent> {
+    pub fn get(&self, id: &ComponentId) -> Option<&WasmComponent> {
         self.components.get(id)
     }
 
     /// Get a mutable component by ID.
-    pub fn get_mut(&mut self, id: &str) -> Option<&mut WasmComponent> {
+    pub fn get_mut(&mut self, id: &ComponentId) -> Option<&mut WasmComponent> {
         self.components.get_mut(id)
     }
 
     /// Get component metadata.
-    pub fn metadata(&self, id: &str) -> Option<&ComponentMetadata> {
+    pub fn metadata(&self, id: &ComponentId) -> Option<&ComponentMetadata> {
         self.metadata.get(id)
     }
 
@@ -87,7 +87,7 @@ impl ComponentRegistry {
     }
 
     /// Remove a component.
-    pub fn remove(&mut self, id: &str) -> Option<WasmComponent> {
+    pub fn remove(&mut self, id: &ComponentId) -> Option<WasmComponent> {
         self.metadata.remove(id);
         self.components.remove(id)
     }

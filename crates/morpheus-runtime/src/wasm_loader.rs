@@ -8,15 +8,13 @@
 
 use morpheus_core::errors::Result;
 use morpheus_core::permissions::Permissions;
+use morpheus_core::component::{ComponentId, ComponentMetadata};
 
 /// A loaded WASM component instance.
 ///
 /// Note: Currently a placeholder. In a real browser environment,
 /// this would hold WebAssembly::Module and WebAssembly::Instance.
 pub struct WasmComponent {
-    /// Component ID.
-    id: String,
-
     /// Permissions for this component.
     permissions: Permissions,
 
@@ -25,13 +23,6 @@ pub struct WasmComponent {
 
     /// WASM bytes (stored for reload).
     wasm_bytes: Vec<u8>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ComponentMetadata {
-    pub id: String,
-    pub version: u32,
-    pub loaded_at: String,
 }
 
 impl WasmComponent {
@@ -46,16 +37,17 @@ impl WasmComponent {
         // 3. Instantiate: WebAssembly::Instance::new(&module, &imports)
         // 4. Store module and instance for hot-reload
 
-        let id = format!("component-{:016x}", simple_hash(wasm_bytes));
+        let component_id = ComponentId(simple_hash(wasm_bytes));
 
         let metadata = ComponentMetadata {
-            id: id.clone(),
+            id: component_id,
+            name: format!("component-{:016x}", component_id.0),
             version: 1,
             loaded_at: get_timestamp(),
+            ai_generated: false,
         };
 
         Ok(Self {
-            id,
             permissions,
             metadata,
             wasm_bytes: wasm_bytes.to_vec(),
@@ -63,8 +55,8 @@ impl WasmComponent {
     }
 
     /// Get component ID.
-    pub fn id(&self) -> &str {
-        &self.id
+    pub fn id(&self) -> ComponentId {
+        self.metadata.id
     }
 
     /// Get component permissions.

@@ -1,0 +1,16 @@
+[package]
+name = "integration-test"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "test-integration"
+path = "src/main.rs"
+
+[dependencies]
+morpheus-core = { path = "../../crates/morpheus-core" }
+morpheus-compiler = { path = "../../crates/morpheus-compiler" }
+morpheus-runtime = { path = "../../crates/morpheus-runtime" }
+
+tokio = { workspace = true }
+anyhow = { workspace = true }

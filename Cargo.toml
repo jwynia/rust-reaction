@@ -8,6 +8,7 @@ members = [
     "examples/visual-demo",
     "examples/ai-playground",
     "examples/safety-demo",
+    "examples/morpheus-complete",
 ]
 resolver = "2"
 

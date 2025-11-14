@@ -22,3 +22,7 @@ wasm-pack.log
 
 # Node modules (if using for serving examples)
 node_modules/
+
+# Environment files (API keys, secrets)
+.env
+**/.env

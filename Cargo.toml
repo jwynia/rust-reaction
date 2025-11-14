@@ -6,6 +6,7 @@ members = [
     "examples/compiler-test",
     "examples/integration-test",
     "examples/visual-demo",
+    "examples/ai-playground",
 ]
 resolver = "2"
 

@@ -27,12 +27,17 @@
 //!                │
 //!                ↓
 //! ┌─────────────────────────────────────┐
-//! │    WasmComponentLoader              │
+//! │    WasmComponent                    │
 //! │  - Loads WASM modules               │
 //! │  - Enforces permissions             │
 //! │  - Provides sandboxed execution     │
+//! │  - Hot-reload capability            │
 //! └─────────────────────────────────────┘
 //! ```
+
+pub mod wasm_loader;
+
+pub use wasm_loader::WasmComponent;
 
 use morpheus_core::prelude::*;
 use std::collections::HashMap;
@@ -40,13 +45,10 @@ use std::collections::HashMap;
 /// Registry of dynamically loaded components.
 pub struct ComponentRegistry {
     /// Loaded components by ID.
-    components: HashMap<ComponentId, Box<dyn std::any::Any>>,
+    components: HashMap<String, WasmComponent>,
 
     /// Component metadata.
-    metadata: HashMap<ComponentId, ComponentMetadata>,
-
-    /// Next available component ID.
-    next_id: u64,
+    metadata: HashMap<String, ComponentMetadata>,
 }
 
 impl ComponentRegistry {
@@ -55,71 +57,44 @@ impl ComponentRegistry {
         Self {
             components: HashMap::new(),
             metadata: HashMap::new(),
-            next_id: 0,
         }
     }
 
-    /// Allocate a new component ID.
-    fn allocate_id(&mut self) -> ComponentId {
-        let id = ComponentId(self.next_id);
-        self.next_id += 1;
-        id
+    /// Register a loaded component.
+    pub fn register(&mut self, id: String, component: WasmComponent, metadata: ComponentMetadata) {
+        self.components.insert(id.clone(), component);
+        self.metadata.insert(id, metadata);
+    }
+
+    /// Get a component by ID.
+    pub fn get(&self, id: &str) -> Option<&WasmComponent> {
+        self.components.get(id)
+    }
+
+    /// Get a mutable component by ID.
+    pub fn get_mut(&mut self, id: &str) -> Option<&mut WasmComponent> {
+        self.components.get_mut(id)
     }
 
     /// Get component metadata.
-    pub fn metadata(&self, id: ComponentId) -> Option<&ComponentMetadata> {
-        self.metadata.get(&id)
+    pub fn metadata(&self, id: &str) -> Option<&ComponentMetadata> {
+        self.metadata.get(id)
     }
 
     /// List all loaded components.
     pub fn list(&self) -> impl Iterator<Item = &ComponentMetadata> {
         self.metadata.values()
     }
+
+    /// Remove a component.
+    pub fn remove(&mut self, id: &str) -> Option<WasmComponent> {
+        self.metadata.remove(id);
+        self.components.remove(id)
+    }
 }
 
 impl Default for ComponentRegistry {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-/// Loads WASM modules as components.
-pub struct WasmComponentLoader {
-    /// Permission enforcer.
-    _permissions: PermissionEnforcer,
-}
-
-impl WasmComponentLoader {
-    pub fn new() -> Self {
-        Self {
-            _permissions: PermissionEnforcer::new(),
-        }
-    }
-
-    /// Load a WASM module.
-    ///
-    /// Returns error if the module violates permissions or fails to load.
-    pub async fn load(&self, _wasm_bytes: &[u8]) -> Result<()> {
-        // TODO: Implement WASM module loading
-        Err(MorpheusError::LoadError(
-            "WASM loader not yet implemented - placeholder only".to_string()
-        ))
-    }
-}
-
-impl Default for WasmComponentLoader {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Enforces permission restrictions on components.
-struct PermissionEnforcer {
-    // TODO: Implement permission enforcement
-}
-
-impl PermissionEnforcer {
-    fn new() -> Self {
-        Self {}
     }
 }

@@ -26,7 +26,7 @@
 //! }
 //! ```
 
-use morpheus_core::errors::{MorpheusError, Result};
+use morpheus_core::errors::Result;
 use async_trait::async_trait;
 
 pub mod subprocess;

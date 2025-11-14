@@ -8,6 +8,9 @@
 //! AI-generated code MUST compile and type-check before it can run.
 //!
 //! ```rust,ignore
+//! use morpheus_compiler::{Compiler, SubprocessCompiler};
+//!
+//! let compiler = SubprocessCompiler::new().await?;
 //! let ai_code = ai.generate("Add dark mode toggle").await?;
 //!
 //! match compiler.compile(&ai_code).await {
@@ -22,27 +25,13 @@
 //!     }
 //! }
 //! ```
-//!
-//! ## Implementation Approaches
-//!
-//! Several options for runtime Rust compilation:
-//!
-//! 1. **Spawn rustc/wasm-pack** - Simple but heavyweight
-//! 2. **Cargo as library** - More integrated
-//! 3. **wasm-bindgen directly** - Skip cargo overhead
-//! 4. **Rust interpreter** - Faster iteration but less safe
-//!
-//! ## To Be Determined
-//!
-//! This crate is a placeholder. Actual implementation will be determined
-//! after researching the best approach for:
-//! - Compilation speed (<5 seconds target)
-//! - Sandboxing during compilation
-//! - Error message quality
-//! - Integration with existing tools
 
 use morpheus_core::errors::{MorpheusError, Result};
 use async_trait::async_trait;
+
+pub mod subprocess;
+
+pub use subprocess::SubprocessCompiler;
 
 /// A compiler that can turn Rust code into WASM modules.
 #[async_trait]
@@ -82,22 +71,4 @@ pub enum Severity {
     Error,
     Warning,
     Note,
-}
-
-// Placeholder implementation
-pub struct PlaceholderCompiler;
-
-#[async_trait]
-impl Compiler for PlaceholderCompiler {
-    async fn compile(&self, _source: &str) -> Result<Vec<u8>> {
-        Err(MorpheusError::CompilationError(
-            "Compiler not yet implemented - placeholder only".to_string()
-        ))
-    }
-
-    async fn check(&self, _source: &str) -> Result<()> {
-        Err(MorpheusError::CompilationError(
-            "Compiler not yet implemented - placeholder only".to_string()
-        ))
-    }
 }

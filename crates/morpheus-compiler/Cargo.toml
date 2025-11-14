@@ -10,12 +10,8 @@ description = "Rust-to-WASM compiler integration for Morpheus"
 morpheus-core = { path = "../morpheus-core" }
 thiserror.workspace = true
 anyhow.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["process", "fs"] }
 async-trait.workspace = true
 
-# TODO: Research best approach for runtime Rust compilation
-# Options:
-# - Spawn rustc/wasm-pack as subprocess
-# - Use cargo as library
-# - Integrate with wasm-bindgen directly
-# - Use a Rust interpreter/JIT
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

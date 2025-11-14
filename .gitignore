@@ -1,0 +1,24 @@
+# Rust build artifacts
+/target/
+**/target/
+
+# Cargo lock file (not needed for library projects)
+Cargo.lock
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# WASM build artifacts
+pkg/
+wasm-pack.log
+
+# Node modules (if using for serving examples)
+node_modules/

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheus - Complete System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.95;
+        }
+
+        .header .tagline {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .panel-header h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .panel-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .panel-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* AI Input Panel */
+        .input-area {
+            margin-bottom: 20px;
+        }
+
+        .input-area label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .input-area textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .examples {
+            margin-top: 12px;
+        }
+
+        .examples p {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 4px 4px 4px 0;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .status.loading {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .logs {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #1e293b;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        /* Component Display */
+        #component-display {
+            min-height: 400px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        /* Version History */
+        .history-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 4px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+
+        .history-item.current {
+            background: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .history-item.ai-generated {
+            border-left-color: #10b981;
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-item-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 13px;
+        }
+
+        .history-item-time {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .history-item-desc {
+            font-size: 12px;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .history-item-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .rollback-btn {
+            padding: 6px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .rollback-btn:hover {
+            background: #2563eb;
+        }
+
+        .rollback-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .state-display {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .state-display strong {
+            display: block;
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .phase-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .phase-badge {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧬 Morpheus</h1>
+        <p>The Complete System - All 6 Phases Integrated</p>
+        <p class="tagline">Natural language → Working component with complete safety</p>
+        <div class="phase-badges">
+            <span class="phase-badge">✅ Runtime Compilation</span>
+            <span class="phase-badge">✅ Hot-Reload</span>
+            <span class="phase-badge">✅ Integration</span>
+            <span class="phase-badge">✅ Visual UI</span>
+            <span class="phase-badge">✅ AI Loop</span>
+            <span class="phase-badge">✅ Safety Model</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Left: AI Input & Component Display -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🎨 AI Generation & Live Component</h2>
+                <p>Request features, see them working instantly</p>
+            </div>
+            <div class="panel-content">
+                <div class="input-area">
+                    <label for="user-prompt">What would you like to build or add?</label>
+                    <textarea
+                        id="user-prompt"
+                        placeholder="Examples:&#10;• Create a todo list with add and delete&#10;• Build a calculator with basic operations&#10;• Make a color picker that changes the background&#10;• Add a reset button to the counter">Create a counter with increment and decrement buttons</textarea>
+
+                    <div class="examples">
+                        <p>Quick examples:</p>
+                        <span class="example-btn" onclick="setPrompt('Create a counter with increment and decrement buttons')">Counter</span>
+                        <span class="example-btn" onclick="setPrompt('Build a todo list where I can add and remove items')">Todo List</span>
+                        <span class="example-btn" onclick="setPrompt('Make a simple calculator with add, subtract, multiply, divide')">Calculator</span>
+                        <span class="example-btn" onclick="setPrompt('Create a color picker with preview')">Color Picker</span>
+                        <span class="example-btn" onclick="setPrompt('Build a timer with start, stop, and reset')">Timer</span>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generate-btn" onclick="generateComponent()">
+                    <span id="btn-text">✨ Generate with AI</span>
+                </button>
+
+                <div id="status" class="status info">
+                    Ready! Enter a description and click "Generate with AI"
+                </div>
+
+                <div id="logs-container" style="display: none;">
+                    <div class="logs" id="logs"></div>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 30px;">
+                    <h3 style="color: #1e293b; margin-bottom: 16px;">🎭 Live Component</h3>
+                    <div id="component-display">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🧬</div>
+                            <h3>No Component Yet</h3>
+                            <p>Generate a component to see it here!</p>
+                            <p style="margin-top: 12px; font-size: 13px;">
+                                AI will write Rust code, compile it to WASM,<br>
+                                and hot-load it right here.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle: Version History -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📜 Version History</h2>
+                <p>All versions with rollback</p>
+            </div>
+            <div class="panel-content">
+                <div class="history-list" id="history-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>No versions yet</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Generate a component to start</p>
+                    </div>
+                </div>
+
+                <div class="state-display">
+                    <strong>Current State:</strong>
+                    <pre id="state-json">{}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Info & Features -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>ℹ️ About Morpheus</h2>
+                <p>The complete safety model</p>
+            </div>
+            <div class="panel-content" style="font-size: 14px; line-height: 1.6;">
+                <h3 style="color: #1e293b; margin-bottom: 12px;">🔒 Safety Features</h3>
+                
+                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
+                    <strong style="color: #1e293b;">State Preservation</strong>
+                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
+                        Your data survives all changes. Counter at 42? It stays at 42 through every version change!
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
+                    <strong style="color: #1e293b;">Version History</strong>
+                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
+                        Every AI generation is tracked with timestamp, description, and state snapshot.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
+                    <strong style="color: #1e293b;">Rollback/Undo</strong>
+                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
+                        Don't like a change? Click rollback to instantly return to any previous version.
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
+                    <strong style="color: #1e293b;">Error Recovery</strong>
+                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
+                        If AI makes a mistake, it automatically retries up to 5 times. The app never breaks!
+                    </p>
+                </div>
+
+                <h3 style="color: #1e293b; margin: 24px 0 12px 0;">🎯 How It Works</h3>
+                
+                <ol style="margin-left: 20px; color: #475569;">
+                    <li style="margin-bottom: 12px;">You describe what you want in natural language</li>
+                    <li style="margin-bottom: 12px;">AI generates Rust/WASM code</li>
+                    <li style="margin-bottom: 12px;">Compiler validates (retries on errors)</li>
+                    <li style="margin-bottom: 12px;">Your state is saved</li>
+                    <li style="margin-bottom: 12px;">New WASM loads</li>
+                    <li style="margin-bottom: 12px;">State is restored - data persists!</li>
+                    <li style="margin-bottom: 12px;">Version tracked in history</li>
+                </ol>
+
+                <h3 style="color: #1e293b; margin: 24px 0 12px 0;">✨ Try This</h3>
+                
+                <ol style="margin-left: 20px; color: #475569;">
+                    <li style="margin-bottom: 8px;">Generate a counter</li>
+                    <li style="margin-bottom: 8px;">Increment it to some value</li>
+                    <li style="margin-bottom: 8px;">Request "add a reset button"</li>
+                    <li style="margin-bottom: 8px;">Notice the count is preserved!</li>
+                    <li style="margin-bottom: 8px;">Rollback to version 0</li>
+                    <li style="margin-bottom: 8px;">Count is still there! ✅</li>
+                </ol>
+
+                <div style="margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <strong style="color: #1e40af;">🧬 The Vision</strong>
+                    <p style="margin-top: 8px; color: #1e40af; font-size: 13px;">
+                        Build entire applications through natural language conversation with AI. Your data is always safe, every change is tracked, and everything is reversible.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentState = {};
+
+        function setPrompt(text) {
+            document.getElementById('user-prompt').value = text;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addLog(message) {
+            const logsContainer = document.getElementById('logs-container');
+            const logsEl = document.getElementById('logs');
+            logsContainer.style.display = 'block';
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = message;
+            logsEl.appendChild(entry);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('logs-container').style.display = 'none';
+        }
+
+        function setButtonLoading(loading) {
+            const btn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+
+            btn.disabled = loading;
+            if (loading) {
+                btnText.innerHTML = '<span class="spinner"></span> Generating...';
+            } else {
+                btnText.textContent = '✨ Generate with AI';
+            }
+        }
+
+        function updateStateDisplay() {
+            document.getElementById('state-json').textContent = JSON.stringify(currentState, null, 2);
+        }
+
+        async function saveState() {
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: currentState })
+                });
+            } catch (error) {
+                console.error('Failed to save state:', error);
+            }
+        }
+
+        async function generateComponent() {
+            const prompt = document.getElementById('user-prompt').value.trim();
+
+            if (!prompt) {
+                setStatus('Please enter a description.', 'error');
+                return;
+            }
+
+            clearLogs();
+            setButtonLoading(true);
+            setStatus('Sending to AI...', 'loading');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt }),
+                });
+
+                const data = await response.json();
+
+                // Display logs
+                if (data.logs) {
+                    data.logs.forEach(log => addLog(log));
+                }
+
+                if (data.success) {
+                    setStatus(`✅ Success! Generated in ${data.iterations} iteration(s)`, 'success');
+
+                    // Restore state if exists
+                    if (data.restored_state) {
+                        currentState = data.restored_state;
+                        addLog('\n🔒 State restored from previous version!');
+                    }
+
+                    updateStateDisplay();
+
+                    // Load WASM
+                    await loadWasmComponent(data.wasm_base64);
+
+                    // Refresh history
+                    loadHistory();
+                } else {
+                    setStatus(`❌ Failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                setStatus(`❌ Network error: ${error.message}`, 'error');
+            } finally {
+                setButtonLoading(false);
+            }
+        }
+
+        async function loadWasmComponent(base64Wasm) {
+            try {
+                addLog('📦 Loading WASM module...');
+
+                const wasmBytes = Uint8Array.from(atob(base64Wasm), c => c.charCodeAt(0));
+                const wasmModule = await WebAssembly.compile(wasmBytes);
+                const wasmInstance = await WebAssembly.instantiate(wasmModule, {
+                    './morpheus_component': {
+                        __wbindgen_placeholder__: () => {}
+                    }
+                });
+
+                addLog('✅ WASM loaded successfully!');
+                addLog('🎨 Component rendering...');
+
+            } catch (error) {
+                console.error('WASM loading error:', error);
+                addLog(`❌ WASM error: ${error.message}`);
+                setStatus(`❌ WASM loading failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+
+                const historyList = document.getElementById('history-list');
+
+                if (data.versions.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <p>No versions yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = data.versions.reverse().map(v => `
+                    <div class="history-item ${v.is_current ? 'current' : ''} ${v.ai_generated ? 'ai-generated' : ''}">
+                        <div class="history-item-header">
+                            <span class="history-item-name">
+                                ${v.is_current ? '▶️ ' : ''}${v.name}
+                            </span>
+                            <span class="history-item-time">${formatTime(v.created_at)}</span>
+                        </div>
+                        ${v.ai_generated ? '<span class="history-item-badge">🤖 AI Generated</span>' : ''}
+                        <div class="history-item-desc">${v.description}</div>
+                        <button
+                            class="rollback-btn"
+                            onclick="rollback(${v.id})"
+                            ${v.is_current ? 'disabled' : ''}
+                        >
+                            ${v.is_current ? '✓ Current' : '↩️ Rollback'}
+                        </button>
+                    </div>
+                `).join('');
+
+                // Update current state display
+                if (data.current_state) {
+                    currentState = data.current_state;
+                    updateStateDisplay();
+                }
+
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        async function rollback(versionId) {
+            try {
+                setStatus('Rolling back...', 'loading');
+
+                const response = await fetch('/api/rollback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ version_id: versionId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    setStatus(`✅ Rolled back to version ${versionId}`, 'success');
+
+                    // Restore state
+                    if (data.restored_state) {
+                        currentState = data.restored_state;
+                        updateStateDisplay();
+                        addLog(`🔒 State restored from version ${versionId}`);
+                    }
+
+                    // Reload WASM
+                    await loadWasmComponent(data.wasm_base64);
+
+                    // Refresh history
+                    loadHistory();
+                } else {
+                    setStatus(`❌ Rollback failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Rollback failed:', error);
+                setStatus('❌ Rollback error', 'error');
+            }
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        }
+
+        // Initialize
+        updateStateDisplay();
+        loadHistory();
+
+        // Refresh history every 3 seconds
+        setInterval(loadHistory, 3000);
+
+        // Allow Enter to submit (Shift+Enter for newline)
+        document.getElementById('user-prompt').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateComponent();
+            }
+        });
+    </script>
+</body>
+</html>

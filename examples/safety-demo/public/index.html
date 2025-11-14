@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheus Safety Demo - Phase 6</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .panel-header h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .panel-header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .panel-content {
+            padding: 20px;
+        }
+
+        /* Component display area */
+        #component-display {
+            min-height: 300px;
+        }
+
+        /* Version controls */
+        .version-selector {
+            margin-bottom: 20px;
+        }
+
+        .version-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .version-btns {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .version-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .version-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .version-btn.v1 {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .version-btn.v2 {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .version-btn.v3 {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .info-box {
+            margin-top: 20px;
+            padding: 16px;
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Version history */
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border-left: 4px solid #cbd5e1;
+            transition: all 0.2s;
+        }
+
+        .history-item.current {
+            background: #dbeafe;
+            border-left-color: #3b82f6;
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-item-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .history-item-time {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .history-item-desc {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .rollback-btn {
+            padding: 6px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .rollback-btn:hover {
+            background: #2563eb;
+        }
+
+        .rollback-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .state-display {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .state-display strong {
+            display: block;
+            margin-bottom: 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Demo component styles */
+        .demo-counter {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .demo-counter-value {
+            font-size: 64px;
+            font-weight: 900;
+            margin: 20px 0;
+        }
+
+        .demo-counter-buttons {
+            margin-top: 20px;
+        }
+
+        .demo-counter-buttons button {
+            padding: 12px 24px;
+            margin: 0 8px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .demo-counter-buttons button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧬 Morpheus Safety Demo</h1>
+        <p>Phase 6: State Preservation, Version History, and Rollback</p>
+    </div>
+
+    <div class="container">
+        <!-- Left: Component Display -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🎨 Live Component</h2>
+                <p>State persists across version changes!</p>
+            </div>
+            <div class="panel-content">
+                <div id="component-display">
+                    <!-- Demo counter component -->
+                    <div class="demo-counter" id="demo-counter">
+                        <h2 style="color: #1e293b; margin-bottom: 10px;">Interactive Counter</h2>
+                        <p style="color: #64748b; margin-bottom: 20px;">This is Version 1 - Blue Theme</p>
+                        <div class="demo-counter-value" style="color: #3b82f6;" id="counter-value">0</div>
+                        <div class="demo-counter-buttons">
+                            <button style="background: #ef4444; color: white;" onclick="decrementCounter()">➖ Decrement</button>
+                            <button style="background: #6b7280; color: white;" onclick="resetCounter()">🔄 Reset</button>
+                            <button style="background: #10b981; color: white;" onclick="incrementCounter()">➕ Increment</button>
+                        </div>
+                        <div style="margin-top: 30px; padding: 20px; background: #f1f5f9; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <strong style="color: #1e293b;">🔒 State Preservation Demo</strong>
+                            <p style="margin: 8px 0 0 0; color: #475569; font-size: 14px;">
+                                Try this: Increment the counter, then load Version 2 or 3.
+                                The count will be preserved! Roll back and it's still there.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="version-selector">
+                    <label>Load Different Versions:</label>
+                    <div class="version-btns">
+                        <button class="version-btn v1" onclick="loadVersion('v1')">
+                            📘 Version 1 (Blue)
+                        </button>
+                        <button class="version-btn v2" onclick="loadVersion('v2')">
+                            📗 Version 2 (Green)
+                        </button>
+                        <button class="version-btn v3" onclick="loadVersion('v3')">
+                            📙 Version 3 (Orange)
+                        </button>
+                        <button class="version-btn" onclick="loadVersion('custom')" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                            ✨ Version 4 (Purple)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>🎯 What Phase 6 Demonstrates:</strong>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>State persists across hot-reloads</li>
+                        <li>Version history tracks all changes</li>
+                        <li>Rollback to any previous version</li>
+                        <li>Your data never gets lost</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Version History -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>📜 Version History</h2>
+                <p>All component versions with rollback</p>
+            </div>
+            <div class="panel-content">
+                <div class="history-list" id="history-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>No versions loaded yet</p>
+                        <p style="font-size: 13px; margin-top: 8px;">Load a version to see history</p>
+                    </div>
+                </div>
+
+                <div class="state-display">
+                    <strong>Current State:</strong>
+                    <pre id="state-json">{}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current component state
+        let currentState = {
+            count: 0
+        };
+
+        // Counter functions
+        function incrementCounter() {
+            currentState.count++;
+            updateCounterDisplay();
+            saveState();
+        }
+
+        function decrementCounter() {
+            currentState.count--;
+            updateCounterDisplay();
+            saveState();
+        }
+
+        function resetCounter() {
+            currentState.count = 0;
+            updateCounterDisplay();
+            saveState();
+        }
+
+        function updateCounterDisplay() {
+            document.getElementById('counter-value').textContent = currentState.count;
+            document.getElementById('state-json').textContent = JSON.stringify(currentState, null, 2);
+        }
+
+        // Save state to server
+        async function saveState() {
+            try {
+                await fetch('/api/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: currentState })
+                });
+            } catch (error) {
+                console.error('Failed to save state:', error);
+            }
+        }
+
+        // Load a version
+        async function loadVersion(versionName) {
+            const versions = {
+                v1: {
+                    name: 'Version 1 - Blue Theme',
+                    description: 'Original blue theme with professional styling',
+                    rust_code: 'v1_code',
+                    color: '#3b82f6',
+                    bgColor: '#dbeafe',
+                    borderColor: '#3b82f6',
+                    title: 'Interactive Counter',
+                    subtitle: 'This is Version 1 - Blue Theme'
+                },
+                v2: {
+                    name: 'Version 2 - Green Theme',
+                    description: 'Eco-friendly green theme with nature vibes',
+                    rust_code: 'v2_code',
+                    color: '#10b981',
+                    bgColor: '#d1fae5',
+                    borderColor: '#10b981',
+                    title: '♻️ Eco Counter',
+                    subtitle: 'Version 2 - Green Eco Theme'
+                },
+                v3: {
+                    name: 'Version 3 - Orange Theme',
+                    description: 'Energetic orange theme with warm colors',
+                    rust_code: 'v3_code',
+                    color: '#f59e0b',
+                    bgColor: '#fef3c7',
+                    borderColor: '#f59e0b',
+                    title: '🔥 Energy Counter',
+                    subtitle: 'Version 3 - Orange Energy Theme'
+                },
+                custom: {
+                    name: 'Version 4 - Purple Theme',
+                    description: 'Creative purple theme with gradient effects',
+                    rust_code: 'v4_code',
+                    color: '#8b5cf6',
+                    bgColor: '#f3e8ff',
+                    borderColor: '#8b5cf6',
+                    title: '✨ Creative Counter',
+                    subtitle: 'Version 4 - Purple Creative Theme'
+                }
+            };
+
+            const version = versions[versionName];
+            if (!version) return;
+
+            try {
+                const response = await fetch('/api/load', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(version)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Restore state if it exists
+                    if (data.restored_state) {
+                        currentState = data.restored_state;
+                    }
+
+                    // Update component display with new theme
+                    updateComponentTheme(version);
+                    updateCounterDisplay();
+
+                    // Refresh history
+                    loadHistory();
+                }
+            } catch (error) {
+                console.error('Failed to load version:', error);
+            }
+        }
+
+        // Update component theme
+        function updateComponentTheme(version) {
+            const counter = document.getElementById('demo-counter');
+            counter.innerHTML = `
+                <h2 style="color: #1e293b; margin-bottom: 10px;">${version.title}</h2>
+                <p style="color: #64748b; margin-bottom: 20px;">${version.subtitle}</p>
+                <div class="demo-counter-value" style="color: ${version.color};" id="counter-value">${currentState.count}</div>
+                <div class="demo-counter-buttons">
+                    <button style="background: #ef4444; color: white;" onclick="decrementCounter()">➖ Decrement</button>
+                    <button style="background: #6b7280; color: white;" onclick="resetCounter()">🔄 Reset</button>
+                    <button style="background: #10b981; color: white;" onclick="incrementCounter()">➕ Increment</button>
+                </div>
+                <div style="margin-top: 30px; padding: 20px; background: ${version.bgColor}; border-radius: 8px; border-left: 4px solid ${version.borderColor};">
+                    <strong style="color: #1e293b;">🔒 State Preserved!</strong>
+                    <p style="margin: 8px 0 0 0; color: #475569; font-size: 14px;">
+                        Notice the counter value didn't reset? That's state preservation in action!
+                        Try loading different versions or rolling back - the count stays the same.
+                    </p>
+                </div>
+            `;
+        }
+
+        // Load version history
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+
+                const historyList = document.getElementById('history-list');
+
+                if (data.versions.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <p>No versions loaded yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                historyList.innerHTML = data.versions.reverse().map(v => `
+                    <div class="history-item ${v.is_current ? 'current' : ''}">
+                        <div class="history-item-header">
+                            <span class="history-item-name">
+                                ${v.is_current ? '▶️ ' : ''}${v.name}
+                            </span>
+                            <span class="history-item-time">${formatTime(v.created_at)}</span>
+                        </div>
+                        <div class="history-item-desc">${v.description}</div>
+                        <button
+                            class="rollback-btn"
+                            onclick="rollback(${v.id})"
+                            ${v.is_current ? 'disabled' : ''}
+                        >
+                            ${v.is_current ? '✓ Current' : '↩️ Rollback'}
+                        </button>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // Rollback to a version
+        async function rollback(versionId) {
+            try {
+                const response = await fetch('/api/rollback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ version_id: versionId })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Restore state
+                    if (data.restored_state) {
+                        currentState = data.restored_state;
+                        updateCounterDisplay();
+                    }
+
+                    // Refresh history
+                    loadHistory();
+
+                    alert(`✅ Rolled back to version ${versionId}`);
+                } else {
+                    alert(`❌ Rollback failed: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Rollback failed:', error);
+            }
+        }
+
+        // Format timestamp
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        }
+
+        // Initialize
+        updateCounterDisplay();
+        loadHistory();
+
+        // Refresh history every 2 seconds
+        setInterval(loadHistory, 2000);
+    </script>
+</body>
+</html>

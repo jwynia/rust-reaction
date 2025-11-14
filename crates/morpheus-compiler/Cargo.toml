@@ -1,0 +1,17 @@
+[package]
+name = "morpheus-compiler"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Rust-to-WASM compiler integration for Morpheus"
+
+[dependencies]
+morpheus-core = { path = "../morpheus-core" }
+thiserror.workspace = true
+anyhow.workspace = true
+tokio = { workspace = true, features = ["process", "fs"] }
+async-trait.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

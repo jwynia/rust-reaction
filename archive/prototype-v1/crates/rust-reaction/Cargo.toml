@@ -1,0 +1,19 @@
+[package]
+name = "rust-reaction"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "A truly Rust-native frontend framework for building web UIs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen.workspace = true
+web-sys.workspace = true
+js-sys.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"

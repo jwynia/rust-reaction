@@ -1,0 +1,40 @@
+[package]
+name = "ai-playground"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "morpheus-server"
+path = "src/main.rs"
+
+[dependencies]
+# Framework dependencies
+morpheus-core = { path = "../../crates/morpheus-core" }
+morpheus-compiler = { path = "../../crates/morpheus-compiler" }
+morpheus-runtime = { path = "../../crates/morpheus-runtime" }
+
+# Web server
+axum = "0.7"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP client for LLM API
+reqwest = { version = "0.12", features = ["json"] }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Environment variables
+dotenvy = "0.15"
+
+# Base64 encoding
+base64 = "0.22"

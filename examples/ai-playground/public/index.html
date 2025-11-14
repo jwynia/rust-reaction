@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morpheus AI Playground - The Complete Loop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .panel-header h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .panel-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Left panel - Controls */
+        .input-area {
+            margin-bottom: 20px;
+        }
+
+        .input-area label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .input-area textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .input-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .examples {
+            margin-top: 16px;
+        }
+
+        .examples p {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 4px 4px 4px 0;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .generate-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .status.loading {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .logs {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #1e293b;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        /* Right panel - Component display */
+        #component-root {
+            min-height: 200px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel: Controls -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🧬 Morpheus AI Playground</h2>
+                <p>Request features, AI codes them, compilation with auto-retry</p>
+            </div>
+            <div class="panel-content">
+                <div class="input-area">
+                    <label for="user-prompt">What would you like to build?</label>
+                    <textarea
+                        id="user-prompt"
+                        placeholder="Example: Create a color picker that changes the background&#10;Example: Build a todo list with add and remove&#10;Example: Make a simple calculator">Create a counter with increment and decrement buttons</textarea>
+
+                    <div class="examples">
+                        <p>Quick examples:</p>
+                        <span class="example-btn" onclick="setPrompt('Create a counter with increment and decrement buttons')">Counter</span>
+                        <span class="example-btn" onclick="setPrompt('Build a color picker that changes the background color')">Color Picker</span>
+                        <span class="example-btn" onclick="setPrompt('Make a simple calculator with add, subtract, multiply, divide')">Calculator</span>
+                        <span class="example-btn" onclick="setPrompt('Create a todo list where I can add and remove items')">Todo List</span>
+                        <span class="example-btn" onclick="setPrompt('Build a random quote generator with a refresh button')">Quote Generator</span>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generate-btn" onclick="generateComponent()">
+                    <span id="btn-text">✨ Generate Component</span>
+                </button>
+
+                <div id="status" class="status info">
+                    Ready to generate your component. Enter a description and click the button!
+                </div>
+
+                <div id="logs-container" style="display: none;">
+                    <h3 style="margin-top: 20px; color: #1e293b; font-size: 16px;">📜 Generation Log</h3>
+                    <div class="logs" id="logs"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Component Display -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>🎨 Live Component</h2>
+                <p>Your generated component will appear here</p>
+            </div>
+            <div class="panel-content">
+                <div id="component-root">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎭</div>
+                        <h3>No Component Yet</h3>
+                        <p>Generate a component to see it rendered here.</p>
+                        <p style="margin-top: 12px; font-size: 13px;">The AI will write Rust code, compile it to WASM,<br>and hot-load it into this area.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentComponent = null;
+
+        function setPrompt(text) {
+            document.getElementById('user-prompt').value = text;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function addLog(message) {
+            const logsContainer = document.getElementById('logs-container');
+            const logsEl = document.getElementById('logs');
+            logsContainer.style.display = 'block';
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = message;
+            logsEl.appendChild(entry);
+            logsEl.scrollTop = logsEl.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('logs-container').style.display = 'none';
+        }
+
+        function setButtonLoading(loading) {
+            const btn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+
+            btn.disabled = loading;
+            if (loading) {
+                btnText.innerHTML = '<span class="spinner"></span> Generating...';
+            } else {
+                btnText.textContent = '✨ Generate Component';
+            }
+        }
+
+        async function generateComponent() {
+            const prompt = document.getElementById('user-prompt').value.trim();
+
+            if (!prompt) {
+                setStatus('Please enter a description of what you want to build.', 'error');
+                return;
+            }
+
+            clearLogs();
+            setButtonLoading(true);
+            setStatus('Sending request to AI...', 'loading');
+            addLog('🚀 Starting generation process...');
+            addLog(`📝 User request: ${prompt}`);
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ prompt }),
+                });
+
+                const data = await response.json();
+
+                // Display logs
+                if (data.logs) {
+                    data.logs.forEach(log => addLog(log));
+                }
+
+                if (data.success) {
+                    setStatus(`✅ Success! Component generated after ${data.iterations} iteration(s)`, 'success');
+                    addLog(`\n🎉 Component ready! Loading into browser...`);
+
+                    // Load the WASM component
+                    await loadWasmComponent(data.wasm_base64);
+                } else {
+                    setStatus(`❌ Failed: ${data.error}`, 'error');
+                    addLog(`\n❌ Generation failed after ${data.iterations} iteration(s)`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                setStatus(`❌ Network error: ${error.message}`, 'error');
+                addLog(`\n❌ Network error: ${error.message}`);
+            } finally {
+                setButtonLoading(false);
+            }
+        }
+
+        async function loadWasmComponent(base64Wasm) {
+            try {
+                // Decode base64 to bytes
+                const wasmBytes = Uint8Array.from(atob(base64Wasm), c => c.charCodeAt(0));
+
+                addLog('📦 WASM bytes received, instantiating...');
+
+                // Compile and instantiate WASM
+                const wasmModule = await WebAssembly.compile(wasmBytes);
+                const wasmInstance = await WebAssembly.instantiate(wasmModule, {
+                    // Provide imports that wasm-bindgen expects
+                    './morpheus_component': {
+                        __wbindgen_placeholder__: () => {}
+                    }
+                });
+
+                addLog('✅ WASM module loaded successfully!');
+                addLog('🎨 Component should be rendering...');
+
+                // The component's #[wasm_bindgen(start)] function runs automatically
+                // and should render to #component-root
+
+            } catch (error) {
+                console.error('WASM loading error:', error);
+                addLog(`❌ WASM loading error: ${error.message}`);
+                setStatus(`❌ Failed to load WASM: ${error.message}`, 'error');
+            }
+        }
+
+        // Allow Enter to submit (with Shift+Enter for newline)
+        document.getElementById('user-prompt').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateComponent();
+            }
+        });
+    </script>
+</body>
+</html>

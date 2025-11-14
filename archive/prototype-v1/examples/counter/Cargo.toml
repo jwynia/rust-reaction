@@ -1,0 +1,12 @@
+[package]
+name = "counter-example"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+rust-reaction = { path = "../../crates/rust-reaction" }
+wasm-bindgen.workspace = true
+web-sys.workspace = true
+
+[lib]
+crate-type = ["cdylib"]

@@ -35,3 +35,6 @@ echo "  - Runtime compilation: cargo run --bin test-compiler"
 echo "  - Full integration: cargo run --bin test-integration"
 echo "  - Visual demo: cd examples/visual-demo && wasm-pack build --target web"
 echo ""
+
+npm install -g @anthropic-ai/claude-code
+npm install -g @opencode

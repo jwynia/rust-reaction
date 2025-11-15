@@ -1,7 +1,6 @@
 {
 	"name": "Morpheus - Rust WASM Development",
 	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
-
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
 			"version": "3.11"
@@ -10,7 +9,6 @@
 			"version": "20"
 		}
 	},
-
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -30,8 +28,10 @@
 			}
 		}
 	},
-
-	"forwardPorts": [3002, 8080],
+	"forwardPorts": [
+		3002,
+		8080
+	],
 	"portsAttributes": {
 		"3002": {
 			"label": "Morpheus Server",
@@ -42,16 +42,14 @@
 			"onAutoForward": "silent"
 		}
 	},
-
 	"postCreateCommand": "bash .devcontainer/post-create.sh",
-
 	"remoteUser": "vscode",
-
-	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.cargo/registry,target=/usr/local/cargo/registry,type=volume"
-	],
-
+	"mounts": [],
 	"containerEnv": {
-		"RUST_BACKTRACE": "1"
+		"RUST_BACKTRACE": "1",
+		"XDG_CONFIG_HOME": "/workspaces/${localWorkspaceFolderBasename}/.opencode/config",
+		"XDG_DATA_HOME": "/workspaces/${localWorkspaceFolderBasename}/.opencode/data",
+		"XDG_CACHE_HOME": "/workspaces/${localWorkspaceFolderBasename}/.opencode/cache",
+		"XDG_STATE_HOME": "/workspaces/${localWorkspaceFolderBasename}/.opencode/state",
 	}
 }

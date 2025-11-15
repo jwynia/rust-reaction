@@ -9,6 +9,10 @@
 			"version": "20"
 		}
 	},
+	"runArgs": [
+		"--env-file",
+		".devcontainer/.env"
+	],
 	"customizations": {
 		"vscode": {
 			"extensions": [

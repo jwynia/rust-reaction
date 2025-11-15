@@ -481,7 +481,7 @@ async fn call_claude_api(state: &AppState) -> Result<String, AppError> {
         .header("anthropic-version", "2023-06-01")
         .header("content-type", "application/json")
         .json(&ClaudeRequest {
-            model: "claude-3-5-sonnet-20241022".to_string(),
+            model: "claude-3-5-sonnet-latest".to_string(),
             max_tokens: 4096,
             messages,
         })

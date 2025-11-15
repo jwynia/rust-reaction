@@ -37,4 +37,4 @@ echo "  - Visual demo: cd examples/visual-demo && wasm-pack build --target web"
 echo ""
 
 npm install -g @anthropic-ai/claude-code
-npm install -g @opencode
+npm i -g opencode-ai

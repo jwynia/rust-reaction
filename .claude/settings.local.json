@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo --version:*)",
+      "Bash(rustc:*)",
+      "Bash(wasm-pack --version:*)",
+      "Bash(cargo tree:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

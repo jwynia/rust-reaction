@@ -27,3 +27,4 @@ node_modules/
 # Environment files (API keys, secrets)
 .env
 **/.env
+.opencode

@@ -3,951 +3,598 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morpheus - Complete System</title>
-
-    <!-- Tailwind CSS CDN for AI-generated components -->
+    <title>Morpheus - Self-Modifying Application</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
         }
 
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
+        .glow {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
         }
 
-        .header h1 {
-            font-size: 42px;
-            margin-bottom: 8px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .conversation-entry {
+            animation: slideIn 0.3s ease-out;
         }
 
-        .header p {
-            font-size: 18px;
-            opacity: 0.95;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .header .tagline {
-            font-size: 14px;
-            opacity: 0.85;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr;
-            gap: 20px;
-        }
-
-        .panel {
-            background: white;
+        .preview-frame {
+            border: 2px solid #4f46e5;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
+            background: white;
+            min-height: 400px;
+            position: relative;
             overflow: hidden;
         }
 
-        .panel-header {
-            padding: 16px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .panel-header h2 {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-
-        .panel-header p {
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
-        .panel-content {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* AI Input Panel */
-        .input-area {
-            margin-bottom: 20px;
-        }
-
-        .input-area label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #1e293b;
-        }
-
-        .input-area textarea {
-            width: 100%;
-            min-height: 100px;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: vertical;
-        }
-
-        .input-area textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .examples {
-            margin-top: 12px;
-        }
-
-        .examples p {
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .example-btn {
-            display: inline-block;
-            padding: 6px 12px;
-            margin: 4px 4px 4px 0;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .example-btn:hover {
-            background: #e2e8f0;
-            border-color: #94a3b8;
-        }
-
-        .generate-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .generate-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-        }
-
-        .generate-btn:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .status.info {
-            background: #dbeafe;
-            color: #1e40af;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .status.loading {
-            background: #fef3c7;
-            color: #92400e;
-            border-left: 4px solid #f59e0b;
-        }
-
-        .status.success {
-            background: #d1fae5;
-            color: #065f46;
-            border-left: 4px solid #10b981;
-        }
-
-        .status.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-
-        .error-details {
-            margin-top: 12px;
-            padding: 12px;
-            background: white;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            max-height: 300px;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .copy-error-btn {
+        .preview-overlay {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 4px 8px;
-            background: #3b82f6;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(139, 92, 246, 0.95));
             color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .copy-error-btn:hover {
-            background: #2563eb;
-        }
-
-        .copy-error-btn.copied {
-            background: #10b981;
-        }
-
-        .progress-steps {
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 8px;
-        }
-
-        .progress-step {
+            padding: 20px;
+            text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex: 1;
-            opacity: 0.3;
-            transition: all 0.3s;
-        }
-
-        .progress-step.active {
-            opacity: 1;
-        }
-
-        .progress-step.complete {
-            opacity: 1;
-            color: #10b981;
-        }
-
-        .progress-step-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #e2e8f0;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-
-        .progress-step.active .progress-step-icon {
-            background: #fef3c7;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .progress-step.complete .progress-step-icon {
-            background: #d1fae5;
-        }
-
-        .progress-step-label {
-            font-size: 11px;
-            text-align: center;
-            color: #64748b;
-        }
-
-        .progress-step.active .progress-step-label {
-            color: #1e293b;
-            font-weight: 600;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .logs {
-            margin-top: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            background: #f8fafc;
-            border-radius: 6px;
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.6;
-            color: #1e293b;
-        }
-
-        .log-entry {
-            margin-bottom: 4px;
-        }
-
-        /* Component Display */
-        #component-display {
             min-height: 400px;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #64748b;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-        }
-
-        .empty-state h3 {
-            font-size: 20px;
-            margin-bottom: 8px;
-            color: #1e293b;
-        }
-
-        /* Version History */
-        .history-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            padding: 12px;
-            margin-bottom: 8px;
-            background: #f8fafc;
-            border-radius: 6px;
-            border-left: 4px solid #cbd5e1;
-            transition: all 0.2s;
-        }
-
-        .history-item.current {
-            background: #dbeafe;
-            border-left-color: #3b82f6;
-        }
-
-        .history-item.ai-generated {
-            border-left-color: #10b981;
-        }
-
-        .history-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .history-item-name {
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 13px;
-        }
-
-        .history-item-time {
-            font-size: 11px;
-            color: #64748b;
-        }
-
-        .history-item-desc {
-            font-size: 12px;
-            color: #475569;
-            margin-bottom: 8px;
-        }
-
-        .history-item-badge {
+        .status-badge {
             display: inline-block;
-            padding: 2px 8px;
-            background: #d1fae5;
-            color: #065f46;
+            padding: 4px 12px;
             border-radius: 12px;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 600;
-            margin-bottom: 8px;
         }
 
-        .rollback-btn {
-            padding: 6px 12px;
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-inactive {
+            background: #6b7280;
+            color: white;
+        }
+
+        .iteration-badge {
             background: #3b82f6;
             color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .rollback-btn:hover {
-            background: #2563eb;
-        }
-
-        .rollback-btn:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-        }
-
-        .state-display {
-            margin-top: 20px;
-            padding: 12px;
-            background: #f1f5f9;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .state-display strong {
-            display: block;
-            margin-bottom: 8px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .phase-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .phase-badge {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 11px;
             font-weight: 600;
         }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>🧬 Morpheus</h1>
-        <p>The Complete System - All 6 Phases Integrated</p>
-        <p class="tagline">Natural language → Working component with complete safety</p>
-        <div class="phase-badges">
-            <span class="phase-badge">✅ Runtime Compilation</span>
-            <span class="phase-badge">✅ Hot-Reload</span>
-            <span class="phase-badge">✅ Integration</span>
-            <span class="phase-badge">✅ Visual UI</span>
-            <span class="phase-badge">✅ AI Loop</span>
-            <span class="phase-badge">✅ Safety Model</span>
-        </div>
-    </div>
-
-    <div class="container">
-        <!-- Left: AI Input & Component Display -->
-        <div class="panel">
-            <div class="panel-header">
-                <h2>🎨 AI Generation & Live Component</h2>
-                <p>Request features, see them working instantly</p>
-            </div>
-            <div class="panel-content">
-                <div class="input-area">
-                    <label for="user-prompt">What would you like to build or add?</label>
-                    <textarea
-                        id="user-prompt"
-                        placeholder="Examples:&#10;• Create a todo list with add and delete&#10;• Build a calculator with basic operations&#10;• Make a color picker that changes the background&#10;• Add a reset button to the counter">Create a counter with increment and decrement buttons</textarea>
-
-                    <div class="examples">
-                        <p>💡 Try these examples:</p>
-                        <span class="example-btn" onclick="setPrompt('Create a counter with increment and decrement buttons')">Counter</span>
-                        <span class="example-btn" onclick="setPrompt('Build a todo list where I can add and remove items')">Todo List</span>
-                        <span class="example-btn" onclick="setPrompt('Make a simple calculator with add, subtract, multiply, divide')">Calculator</span>
-                        <span class="example-btn" onclick="setPrompt('Create a color picker with preview')">Color Picker</span>
-                        <span class="example-btn" onclick="setPrompt('Build a timer with start, stop, and reset')">Timer</span>
-                        <span class="example-btn" onclick="setPrompt('Make a temperature converter between Celsius and Fahrenheit')">Temperature Converter</span>
-                        <span class="example-btn" onclick="setPrompt('Create a simple stopwatch')">Stopwatch</span>
-                        <span class="example-btn" onclick="setPrompt('Build a random number generator with min and max')">Random Number</span>
-                    </div>
-                </div>
-
-                <button class="generate-btn" id="generate-btn" onclick="generateComponent()">
-                    <span id="btn-text">✨ Generate with AI</span>
-                </button>
-
-                <div id="status" class="status info">
-                    Ready! Enter a description and click "Generate with AI"
-                </div>
-
-                <div id="progress-container" style="display: none;">
-                    <div class="progress-steps">
-                        <div class="progress-step" id="step-ai">
-                            <div class="progress-step-icon">🤖</div>
-                            <div class="progress-step-label">AI Generation</div>
-                        </div>
-                        <div class="progress-step" id="step-compile">
-                            <div class="progress-step-icon">⚙️</div>
-                            <div class="progress-step-label">Compiling</div>
-                        </div>
-                        <div class="progress-step" id="step-load">
-                            <div class="progress-step-icon">📦</div>
-                            <div class="progress-step-label">Loading WASM</div>
-                        </div>
-                        <div class="progress-step" id="step-render">
-                            <div class="progress-step-icon">🎨</div>
-                            <div class="progress-step-label">Rendering</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="logs-container" style="display: none;">
-                    <div class="logs" id="logs"></div>
-                </div>
-
-                <div style="margin-top: 30px; border-top: 2px solid #e2e8f0; padding-top: 30px;">
-                    <h3 style="color: #1e293b; margin-bottom: 16px;">🎭 Live Component</h3>
-                    <div id="component-display">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">🧬</div>
-                            <h3>No Component Yet</h3>
-                            <p>Generate a component to see it here!</p>
-                            <p style="margin-top: 12px; font-size: 13px;">
-                                AI will write Rust code, compile it to WASM,<br>
-                                and hot-load it right here.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                🧬 Morpheus
+            </h1>
+            <p class="text-xl text-gray-400">Self-Modifying Application</p>
+            <p class="text-sm text-gray-500 mt-2 italic">
+                The UI you're using right now could be modified by the conversation below
+            </p>
         </div>
 
-        <!-- Middle: Version History -->
-        <div class="panel">
-            <div class="panel-header">
-                <h2>📜 Version History</h2>
-                <p>All versions with rollback</p>
-            </div>
-            <div class="panel-content">
-                <div class="history-list" id="history-list">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📦</div>
-                        <p>No versions yet</p>
-                        <p style="font-size: 13px; margin-top: 8px;">Generate a component to start</p>
+        <!-- Main Layout -->
+        <div class="grid grid-cols-2 gap-6">
+            <!-- Left: Conversation & Design -->
+            <div class="space-y-6">
+                <!-- Design Session Status -->
+                <div class="bg-slate-800 rounded-lg p-4 glow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold">Design Session</h2>
+                        <span id="sessionStatus" class="status-badge status-inactive">No Active Session</span>
+                    </div>
+                    
+                    <div id="sessionInfo" class="hidden">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-400">Session ID:</span>
+                                <div id="sessionId" class="font-mono text-xs text-indigo-400 truncate"></div>
+                            </div>
+                            <div>
+                                <span class="text-gray-400">Current Iteration:</span>
+                                <div id="currentIteration" class="font-semibold text-white">-</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="state-display">
-                    <strong>Current State:</strong>
-                    <pre id="state-json">{}</pre>
+                <!-- Start New Design -->
+                <div id="startPanel" class="bg-slate-800 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">Start a New Design</h3>
+                    <p class="text-sm text-gray-400 mb-4">
+                        Describe what you want to create. You'll be able to refine it through conversation.
+                    </p>
+                    <textarea 
+                        id="initialPrompt" 
+                        class="w-full bg-slate-900 text-white rounded-lg p-3 border border-slate-700 focus:border-indigo-500 focus:outline-none resize-none"
+                        rows="3"
+                        placeholder="Example: Create a todo list with add and remove functionality"
+                    ></textarea>
+                    <button 
+                        onclick="startDesign()" 
+                        class="mt-3 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                        ✨ Start Designing
+                    </button>
+                </div>
+
+                <!-- Conversation -->
+                <div id="conversationPanel" class="hidden bg-slate-800 rounded-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
+                        <h3 class="text-lg font-semibold">Conversation</h3>
+                        <p class="text-sm opacity-90">Iterative design collaboration</p>
+                    </div>
+                    <div id="conversation" class="p-4 space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Conversation entries will appear here -->
+                    </div>
+                </div>
+
+                <!-- Refine Panel -->
+                <div id="refinePanel" class="hidden bg-slate-800 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4">Refine the Design</h3>
+                    <p class="text-sm text-gray-400 mb-4">
+                        What would you like to change or improve?
+                    </p>
+                    <textarea 
+                        id="feedbackInput" 
+                        class="w-full bg-slate-900 text-white rounded-lg p-3 border border-slate-700 focus:border-indigo-500 focus:outline-none resize-none"
+                        rows="3"
+                        placeholder="Example: Make the buttons bigger and add dark mode"
+                    ></textarea>
+                    <div class="flex gap-3 mt-3">
+                        <button 
+                            onclick="refineDesign()" 
+                            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                            🔄 Refine
+                        </button>
+                        <button 
+                            onclick="commitDesign()" 
+                            class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                            ✅ Commit
+                        </button>
+                        <button 
+                            onclick="cancelDesign()" 
+                            class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-all">
+                            ❌ Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="bg-slate-800 rounded-lg overflow-hidden">
+                    <div class="bg-slate-700 p-3 border-b border-slate-600">
+                        <h3 class="font-semibold text-sm">Activity Log</h3>
+                    </div>
+                    <div id="activityLog" class="p-3 space-y-1 max-h-48 overflow-y-auto text-xs font-mono">
+                        <div class="text-gray-500">Waiting for activity...</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Right: Info & Features -->
-        <div class="panel">
-            <div class="panel-header">
-                <h2>ℹ️ About Morpheus</h2>
-                <p>The complete safety model</p>
-            </div>
-            <div class="panel-content" style="font-size: 14px; line-height: 1.6;">
-                <h3 style="color: #1e293b; margin-bottom: 12px;">🔒 Safety Features</h3>
-                
-                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
-                    <strong style="color: #1e293b;">State Preservation</strong>
-                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
-                        Your data survives all changes. Counter at 42? It stays at 42 through every version change!
-                    </p>
+            <!-- Right: Live Preview -->
+            <div class="space-y-6">
+                <!-- Preview Area -->
+                <div class="bg-slate-800 rounded-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold">Live Preview</h3>
+                            <p class="text-sm opacity-90">Real-time component preview</p>
+                        </div>
+                        <span id="iterationBadge" class="hidden iteration-badge"></span>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div id="previewContainer" class="preview-frame">
+                            <div id="previewOverlay" class="preview-overlay">
+                                <div class="text-center">
+                                    <svg class="w-24 h-24 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                    <h3 class="text-2xl font-bold mb-2">No Active Design</h3>
+                                    <p class="text-sm opacity-90 mb-6">Start a design session to see your component come to life</p>
+                                    <div class="text-xs opacity-75">
+                                        This is where your AI-generated component will appear.<br>
+                                        You can refine it through conversation until it's perfect.
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="componentMount"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
-                    <strong style="color: #1e293b;">Version History</strong>
-                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
-                        Every AI generation is tracked with timestamp, description, and state snapshot.
-                    </p>
+                <!-- Compilation Status -->
+                <div id="compilationStatus" class="hidden bg-slate-800 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="text-2xl">⚙️</div>
+                        <div class="flex-1">
+                            <div class="font-semibold mb-1">Compilation Status</div>
+                            <div id="compilationDetails" class="text-sm text-gray-400"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
-                    <strong style="color: #1e293b;">Rollback/Undo</strong>
-                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
-                        Don't like a change? Click rollback to instantly return to any previous version.
-                    </p>
-                </div>
-
-                <div style="margin-bottom: 20px; padding: 12px; background: #f1f5f9; border-radius: 6px;">
-                    <strong style="color: #1e293b;">Error Recovery</strong>
-                    <p style="margin-top: 8px; color: #475569; font-size: 13px;">
-                        If AI makes a mistake, it automatically retries up to 5 times. The app never breaks!
-                    </p>
-                </div>
-
-                <h3 style="color: #1e293b; margin: 24px 0 12px 0;">🎯 How It Works</h3>
-                
-                <ol style="margin-left: 20px; color: #475569;">
-                    <li style="margin-bottom: 12px;">You describe what you want in natural language</li>
-                    <li style="margin-bottom: 12px;">AI generates Rust/WASM code</li>
-                    <li style="margin-bottom: 12px;">Compiler validates (retries on errors)</li>
-                    <li style="margin-bottom: 12px;">Your state is saved</li>
-                    <li style="margin-bottom: 12px;">New WASM loads</li>
-                    <li style="margin-bottom: 12px;">State is restored - data persists!</li>
-                    <li style="margin-bottom: 12px;">Version tracked in history</li>
-                </ol>
-
-                <h3 style="color: #1e293b; margin: 24px 0 12px 0;">✨ Try This</h3>
-                
-                <ol style="margin-left: 20px; color: #475569;">
-                    <li style="margin-bottom: 8px;">Generate a counter</li>
-                    <li style="margin-bottom: 8px;">Increment it to some value</li>
-                    <li style="margin-bottom: 8px;">Request "add a reset button"</li>
-                    <li style="margin-bottom: 8px;">Notice the count is preserved!</li>
-                    <li style="margin-bottom: 8px;">Rollback to version 0</li>
-                    <li style="margin-bottom: 8px;">Count is still there! ✅</li>
-                </ol>
-
-                <div style="margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); border-radius: 8px; border-left: 4px solid #3b82f6;">
-                    <strong style="color: #1e40af;">🧬 The Vision</strong>
-                    <p style="margin-top: 8px; color: #1e40af; font-size: 13px;">
-                        Build entire applications through natural language conversation with AI. Your data is always safe, every change is tracked, and everything is reversible.
-                    </p>
+                <!-- Version History -->
+                <div class="bg-slate-800 rounded-lg overflow-hidden">
+                    <div class="bg-slate-700 p-3 border-b border-slate-600">
+                        <h3 class="font-semibold text-sm">Committed Versions</h3>
+                    </div>
+                    <div id="versionHistory" class="p-3 space-y-2 max-h-64 overflow-y-auto">
+                        <div class="text-gray-500 text-sm text-center py-4">No versions yet</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentState = {};
+        let currentSession = null;
+        let currentWasm = null;
 
-        function setPrompt(text) {
-            document.getElementById('user-prompt').value = text;
-        }
-
-        function setStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status');
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`;
-        }
-
-        function addLog(message) {
-            const logsContainer = document.getElementById('logs-container');
-            const logsEl = document.getElementById('logs');
-            logsContainer.style.display = 'block';
-
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.textContent = message;
-            logsEl.appendChild(entry);
-            logsEl.scrollTop = logsEl.scrollHeight;
-        }
-
-        function clearLogs() {
-            document.getElementById('logs').innerHTML = '';
-            document.getElementById('logs-container').style.display = 'none';
-        }
-
-        function setButtonLoading(loading) {
-            const btn = document.getElementById('generate-btn');
-            const btnText = document.getElementById('btn-text');
-
-            btn.disabled = loading;
-            if (loading) {
-                btnText.innerHTML = '<span class="spinner"></span> Generating...';
-            } else {
-                btnText.textContent = '✨ Generate with AI';
-            }
-        }
-
-        function updateStateDisplay() {
-            document.getElementById('state-json').textContent = JSON.stringify(currentState, null, 2);
-        }
-
-        function setProgress(step) {
-            const progressContainer = document.getElementById('progress-container');
-            const steps = ['ai', 'compile', 'load', 'render'];
-
-            progressContainer.style.display = 'block';
-
-            steps.forEach((s, idx) => {
-                const el = document.getElementById(`step-${s}`);
-                el.classList.remove('active', 'complete');
-
-                if (s === step) {
-                    el.classList.add('active');
-                } else if (steps.indexOf(s) < steps.indexOf(step)) {
-                    el.classList.add('complete');
-                }
-            });
-        }
-
-        function hideProgress() {
-            document.getElementById('progress-container').style.display = 'none';
-        }
-
-        function displayError(errorMessage, errorDetails = null) {
-            const statusEl = document.getElementById('status');
-            statusEl.className = 'status error';
-            statusEl.innerHTML = `
-                <div>❌ ${errorMessage}</div>
-                ${errorDetails ? `
-                    <div class="error-details">
-                        <button class="copy-error-btn" onclick="copyError(this)">📋 Copy</button>
-                        ${errorDetails}
-                    </div>
-                ` : ''}
-            `;
-        }
-
-        function copyError(btn) {
-            const errorText = btn.parentElement.textContent.replace('📋 Copy', '').trim();
-            navigator.clipboard.writeText(errorText).then(() => {
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
-
-        async function saveState() {
-            try {
-                await fetch('/api/state', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ state: currentState })
-                });
-            } catch (error) {
-                console.error('Failed to save state:', error);
-            }
-        }
-
-        async function generateComponent() {
-            const prompt = document.getElementById('user-prompt').value.trim();
-
+        // Start design session
+        async function startDesign() {
+            const prompt = document.getElementById('initialPrompt').value.trim();
             if (!prompt) {
-                displayError('Please enter a description');
+                addLog('❌ Please enter a prompt', 'error');
                 return;
             }
 
-            clearLogs();
-            setButtonLoading(true);
-            setProgress('ai');
-            setStatus('🤖 Sending request to AI...', 'loading');
-
+            addLog('🎨 Starting design session...', 'info');
+            
             try {
-                const response = await fetch('/api/generate', {
+                const response = await fetch('/api/design/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt }),
+                    body: JSON.stringify({ prompt })
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                setProgress('compile');
-                setStatus('⚙️ Compiling Rust code...', 'loading');
 
                 const data = await response.json();
-
-                // Display logs
-                if (data.logs) {
-                    data.logs.forEach(log => addLog(log));
-                }
-
-                if (data.success) {
-                    setProgress('load');
-                    setStatus('📦 Loading WASM module...', 'loading');
-
-                    // Restore state if exists
-                    if (data.restored_state) {
-                        currentState = data.restored_state;
-                        addLog('\n🔒 State restored from previous version!');
+                
+                if (data.session_id) {
+                    currentSession = data.session_id;
+                    updateSessionUI(true, data);
+                    addConversationEntry('user', prompt);
+                    
+                    data.logs.forEach(log => addLog(log, 'info'));
+                    
+                    if (data.draft.wasm_base64 && data.draft.js_glue) {
+                        await loadComponent(data.draft.wasm_base64, data.draft.js_glue);
+                        updateIterationBadge(data.draft.iteration);
+                    } else if (data.draft.compilation_error) {
+                        showCompilationError(data.draft.compilation_error);
                     }
-
-                    updateStateDisplay();
-
-                    // Load WASM
-                    await loadWasmComponent(data.wasm_base64);
-
-                    setProgress('render');
-                    setStatus(`✅ Success! Generated in ${data.iterations} iteration(s)`, 'success');
-
-                    // Refresh history
-                    loadHistory();
-
-                    setTimeout(() => {
-                        hideProgress();
-                    }, 2000);
                 } else {
-                    hideProgress();
-                    displayError(
-                        'Compilation failed after multiple attempts',
-                        data.error || 'Unknown error'
-                    );
+                    addLog('❌ Failed to start session', 'error');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                hideProgress();
-                displayError(
-                    'Network or server error',
-                    `${error.message}\n\nPlease check:\n• Server is running\n• Network connection\n• Browser console for details`
-                );
-            } finally {
-                setButtonLoading(false);
+                addLog(`❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function loadWasmComponent(base64Wasm) {
-            try {
-                addLog('📦 Loading WASM module...');
+        // Refine design
+        async function refineDesign() {
+            const feedback = document.getElementById('feedbackInput').value.trim();
+            if (!feedback) {
+                addLog('❌ Please enter feedback', 'error');
+                return;
+            }
 
-                const wasmBytes = Uint8Array.from(atob(base64Wasm), c => c.charCodeAt(0));
-                const wasmModule = await WebAssembly.compile(wasmBytes);
-                const wasmInstance = await WebAssembly.instantiate(wasmModule, {
-                    './morpheus_component': {
-                        __wbindgen_placeholder__: () => {}
-                    }
+            addLog('🔄 Refining design...', 'info');
+            addConversationEntry('user', feedback);
+            
+            try {
+                const response = await fetch('/api/design/refine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedback })
                 });
 
-                addLog('✅ WASM loaded successfully!');
-                addLog('🎨 Component rendering...');
+                const data = await response.json();
+                
+                if (data.success) {
+                    data.logs.forEach(log => addLog(log, 'info'));
+                    
+                    if (data.draft.wasm_base64 && data.draft.js_glue) {
+                        await loadComponent(data.draft.wasm_base64, data.draft.js_glue);
+                        updateIterationBadge(data.draft.iteration);
+                    } else if (data.draft.compilation_error) {
+                        showCompilationError(data.draft.compilation_error);
+                    }
 
+                    document.getElementById('feedbackInput').value = '';
+                } else {
+                    addLog(`❌ ${data.error}`, 'error');
+                }
             } catch (error) {
-                console.error('WASM loading error:', error);
-                addLog(`❌ WASM error: ${error.message}`);
-                setStatus(`❌ WASM loading failed: ${error.message}`, 'error');
+                addLog(`❌ Error: ${error.message}`, 'error');
             }
         }
 
-        async function loadHistory() {
+        // Commit design
+        async function commitDesign() {
+            if (!confirm('Commit this design to version history?')) return;
+
+            addLog('✅ Committing design...', 'info');
+            
+            try {
+                const response = await fetch('/api/design/commit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    addLog(`✅ Committed as version ${data.version_id}`, 'success');
+                    updateSessionUI(false);
+                    loadVersionHistory();
+                } else {
+                    addLog(`❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Cancel design
+        async function cancelDesign() {
+            if (!confirm('Cancel this design session? All changes will be lost.')) return;
+
+            try {
+                await fetch('/api/design/cancel', { method: 'POST' });
+                addLog('❌ Design session canceled', 'info');
+                updateSessionUI(false);
+            } catch (error) {
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load WASM component
+        async function loadComponent(wasmBase64, jsGlue, iteration = 1) {
+            try {
+                addLog('📦 Loading WASM module with JS glue...', 'info');
+                
+                const wasmBinary = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0));
+                
+                // Don't use blob URL - pass WASM binary directly to the init function
+                // The JS glue code checks if module_or_path is undefined and creates a URL
+                // We'll pass the binary directly instead
+                
+                // Create blob URL for JS module
+                const jsBlob = new Blob([jsGlue], { type: 'application/javascript' });
+                const jsUrl = URL.createObjectURL(jsBlob);
+                
+                addLog('📦 Loading JS glue module...', 'info');
+                
+                // Import the JS module
+                const wasmModule = await import(jsUrl);
+                
+                addLog('🎨 Initializing WASM...', 'info');
+                
+                // Initialize the WASM by passing the binary directly
+                // The init function accepts: undefined (fetches), string/URL (fetches), or module
+                // We need to compile it first then pass the module
+                const compiledModule = await WebAssembly.compile(wasmBinary);
+                await wasmModule.default(compiledModule);
+                
+                // Mount the component
+                const container = document.getElementById('componentMount');
+                container.innerHTML = ''; // Clear previous
+                
+                // Call the render function if it exists
+                if (typeof wasmModule.render === 'function') {
+                    const html = wasmModule.render();
+                    container.innerHTML = html;
+                    addLog('✅ Component rendered!', 'success');
+                } else {
+                    addLog('⚠️  No render() function found in component', 'warning');
+                }
+
+                // Hide overlay, show component
+                document.getElementById('previewOverlay').classList.add('hidden');
+                
+                currentWasm = wasmBase64;
+                
+                // Clean up blob URL
+                URL.revokeObjectURL(jsUrl);
+                
+            } catch (error) {
+                addLog(`❌ WASM loading error: ${error.message}`, 'error');
+                console.error('Full error:', error);
+                
+                // Automatically fix runtime errors
+                if (iteration < 5) {
+                    addLog(`🔄 Asking AI to fix runtime error (attempt ${iteration + 1}/5)...`, 'info');
+                    await fixRuntimeError(error.message, iteration + 1);
+                } else {
+                    addLog(`❌ Max fix attempts reached. Manual feedback needed.`, 'error');
+                    showCompilationError(`Runtime Error: ${error.message}`);
+                }
+            }
+        }
+
+        // Automatically fix runtime errors
+        async function fixRuntimeError(errorMessage, iteration) {
+            try {
+                const response = await fetch('/api/design/refine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        feedback: `The component compiled but failed to load with this runtime error:\n\n${errorMessage}\n\nThis is a WASM loading error. Please fix the code to avoid dependencies that require JavaScript glue code. Use simpler, more basic Rust/WASM patterns.`
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success && data.draft.wasm_base64 && data.draft.js_glue) {
+                    addLog(`✅ AI generated fix (iteration ${data.draft.iteration})`, 'success');
+                    data.logs.forEach(log => addLog(log, 'info'));
+                    await loadComponent(data.draft.wasm_base64, data.draft.js_glue, iteration);
+                    updateIterationBadge(data.draft.iteration);
+                } else if (data.draft.compilation_error) {
+                    addLog(`⚠️  Fix resulted in compilation error`, 'error');
+                    // The backend will retry compilation automatically
+                } else {
+                    addLog(`❌ Failed to generate fix: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Error fixing runtime error: ${error.message}`, 'error');
+            }
+        }
+
+        // UI Updates
+        function updateSessionUI(active, sessionData = null) {
+            const statusBadge = document.getElementById('sessionStatus');
+            const sessionInfo = document.getElementById('sessionInfo');
+            const startPanel = document.getElementById('startPanel');
+            const refinePanel = document.getElementById('refinePanel');
+            const conversationPanel = document.getElementById('conversationPanel');
+            const previewOverlay = document.getElementById('previewOverlay');
+
+            if (active && sessionData) {
+                statusBadge.textContent = 'Active Session';
+                statusBadge.className = 'status-badge status-active';
+                sessionInfo.classList.remove('hidden');
+                document.getElementById('sessionId').textContent = sessionData.session_id;
+                document.getElementById('currentIteration').textContent = sessionData.draft.iteration;
+                
+                startPanel.classList.add('hidden');
+                refinePanel.classList.remove('hidden');
+                conversationPanel.classList.remove('hidden');
+            } else {
+                statusBadge.textContent = 'No Active Session';
+                statusBadge.className = 'status-badge status-inactive';
+                sessionInfo.classList.add('hidden');
+                
+                startPanel.classList.remove('hidden');
+                refinePanel.classList.add('hidden');
+                conversationPanel.classList.add('hidden');
+                
+                document.getElementById('conversation').innerHTML = '';
+                document.getElementById('componentMount').innerHTML = '';
+                previewOverlay.classList.remove('hidden');
+                document.getElementById('iterationBadge').classList.add('hidden');
+                
+                currentSession = null;
+            }
+        }
+
+        function updateIterationBadge(iteration) {
+            const badge = document.getElementById('iterationBadge');
+            badge.textContent = `Iteration ${iteration}`;
+            badge.classList.remove('hidden');
+        }
+
+        function addConversationEntry(role, content) {
+            const container = document.getElementById('conversation');
+            const entry = document.createElement('div');
+            entry.className = 'conversation-entry p-3 rounded-lg ' + 
+                (role === 'user' ? 'bg-indigo-900/30 border border-indigo-700' : 'bg-slate-700');
+            
+            entry.innerHTML = `
+                <div class="text-xs text-gray-400 mb-1">${role === 'user' ? '👤 You' : '🤖 AI'}</div>
+                <div class="text-sm">${escapeHtml(content)}</div>
+            `;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showCompilationError(error) {
+            const status = document.getElementById('compilationStatus');
+            const details = document.getElementById('compilationDetails');
+            
+            status.classList.remove('hidden');
+            details.innerHTML = `
+                <div class="text-red-400 font-mono text-xs whitespace-pre-wrap">${escapeHtml(error)}</div>
+                <div class="mt-2 text-gray-400">💡 Provide feedback to fix this error</div>
+            `;
+        }
+
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('activityLog');
+            const entry = document.createElement('div');
+            const colors = {
+                info: 'text-blue-400',
+                success: 'text-green-400',
+                error: 'text-red-400'
+            };
+            entry.className = colors[type] || colors.info;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function loadVersionHistory() {
             try {
                 const response = await fetch('/api/history');
                 const data = await response.json();
-
-                const historyList = document.getElementById('history-list');
-
+                
+                const container = document.getElementById('versionHistory');
                 if (data.versions.length === 0) {
-                    historyList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📦</div>
-                            <p>No versions yet</p>
-                        </div>
-                    `;
+                    container.innerHTML = '<div class="text-gray-500 text-sm text-center py-4">No versions yet</div>';
                     return;
                 }
 
-                historyList.innerHTML = data.versions.reverse().map(v => `
-                    <div class="history-item ${v.is_current ? 'current' : ''} ${v.ai_generated ? 'ai-generated' : ''}">
-                        <div class="history-item-header">
-                            <span class="history-item-name">
-                                ${v.is_current ? '▶️ ' : ''}${v.name}
-                            </span>
-                            <span class="history-item-time">${formatTime(v.created_at)}</span>
-                        </div>
-                        ${v.ai_generated ? '<span class="history-item-badge">🤖 AI Generated</span>' : ''}
-                        <div class="history-item-desc">${v.description}</div>
-                        <button
-                            class="rollback-btn"
-                            onclick="rollback(${v.id})"
-                            ${v.is_current ? 'disabled' : ''}
-                        >
-                            ${v.is_current ? '✓ Current' : '↩️ Rollback'}
-                        </button>
+                container.innerHTML = data.versions.map(v => `
+                    <div class="bg-slate-700 rounded p-3 hover:bg-slate-600 transition-colors cursor-pointer">
+                        <div class="font-semibold text-sm">${escapeHtml(v.name)}</div>
+                        <div class="text-xs text-gray-400 mt-1">${escapeHtml(v.description)}</div>
+                        <div class="text-xs text-gray-500 mt-1">${new Date(v.created_at).toLocaleString()}</div>
                     </div>
                 `).join('');
-
-                // Update current state display
-                if (data.current_state) {
-                    currentState = data.current_state;
-                    updateStateDisplay();
-                }
-
             } catch (error) {
                 console.error('Failed to load history:', error);
             }
         }
 
-        async function rollback(versionId) {
-            try {
-                setStatus('Rolling back...', 'loading');
-
-                const response = await fetch('/api/rollback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ version_id: versionId })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    setStatus(`✅ Rolled back to version ${versionId}`, 'success');
-
-                    // Restore state
-                    if (data.restored_state) {
-                        currentState = data.restored_state;
-                        updateStateDisplay();
-                        addLog(`🔒 State restored from version ${versionId}`);
-                    }
-
-                    // Reload WASM
-                    await loadWasmComponent(data.wasm_base64);
-
-                    // Refresh history
-                    loadHistory();
-                } else {
-                    setStatus(`❌ Rollback failed: ${data.error}`, 'error');
-                }
-            } catch (error) {
-                console.error('Rollback failed:', error);
-                setStatus('❌ Rollback error', 'error');
-            }
-        }
-
-        function formatTime(isoString) {
-            const date = new Date(isoString);
-            return date.toLocaleTimeString();
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // Initialize
-        updateStateDisplay();
-        loadHistory();
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVersionHistory();
+            addLog('🧬 Morpheus initialized', 'success');
+            addLog('💡 Start a design session to begin', 'info');
+        });
 
-        // Refresh history every 3 seconds
-        setInterval(loadHistory, 3000);
-
-        // Allow Enter to submit (Shift+Enter for newline)
-        document.getElementById('user-prompt').addEventListener('keydown', (e) => {
+        // Allow Enter to submit (with Shift+Enter for new line)
+        document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                generateComponent();
+                const activeElement = document.activeElement;
+                if (activeElement.id === 'initialPrompt') {
+                    e.preventDefault();
+                    startDesign();
+                } else if (activeElement.id === 'feedbackInput') {
+                    e.preventDefault();
+                    refineDesign();
+                }
             }
         });
     </script>

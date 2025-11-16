@@ -61,15 +61,20 @@ struct ClaudeRequest {
     messages: Vec<Message>,
 }
 
-/// Claude API response structure
+/// Claude API response structure (OpenRouter format)
 #[derive(Deserialize)]
 struct ClaudeResponse {
-    content: Vec<ContentBlock>,
+    choices: Vec<Choice>,
 }
 
 #[derive(Deserialize)]
-struct ContentBlock {
-    text: String,
+struct Choice {
+    message: ResponseMessage,
+}
+
+#[derive(Deserialize)]
+struct ResponseMessage {
+    content: String,
 }
 
 #[tokio::main]
@@ -83,10 +88,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Load environment variables
     dotenvy::dotenv().ok();
-    let api_key = std::env::var("ANTHROPIC_API_KEY")
+    let api_key = std::env::var("OPENROUTER_API_KEY")
         .unwrap_or_else(|_| {
-            warn!("ANTHROPIC_API_KEY not set - AI features will not work!");
-            warn!("Set it with: export ANTHROPIC_API_KEY=your-key-here");
+            warn!("OPENROUTER_API_KEY not set - AI features will not work!");
+            warn!("Set it with: export OPENROUTER_API_KEY=your-key-here");
             String::new()
         });
 
@@ -147,7 +152,7 @@ async fn generate_component(
         return Ok(Json(GenerateResponse {
             success: false,
             wasm_base64: None,
-            error: Some("ANTHROPIC_API_KEY not configured. Set environment variable to use AI features.".to_string()),
+            error: Some("OPENROUTER_API_KEY not configured. Set environment variable to use AI features.".to_string()),
             iterations: 0,
             logs,
         }));
@@ -263,12 +268,13 @@ async fn call_claude_api(state: &AppState) -> Result<String, AppError> {
 
     let client = reqwest::Client::new();
     let response = client
-        .post("https://api.anthropic.com/v1/messages")
-        .header("x-api-key", &state.api_key)
-        .header("anthropic-version", "2023-06-01")
-        .header("content-type", "application/json")
+        .post("https://openrouter.ai/api/v1/chat/completions")
+        .header("Authorization", format!("Bearer {}", &state.api_key))
+        .header("HTTP-Referer", "https://github.com/morpheus-project")
+        .header("X-Title", "Morpheus AI Playground")
+        .header("Content-Type", "application/json")
         .json(&ClaudeRequest {
-            model: "claude-3-5-sonnet-20241022".to_string(),
+            model: "anthropic/claude-3.5-sonnet".to_string(),
             max_tokens: 4096,
             messages,
         })
@@ -287,9 +293,9 @@ async fn call_claude_api(state: &AppState) -> Result<String, AppError> {
     let claude_response: ClaudeResponse = response.json().await?;
 
     let text = claude_response
-        .content
+        .choices
         .first()
-        .map(|block| block.text.clone())
+        .map(|choice| choice.message.content.clone())
         .ok_or_else(|| AppError::ApiError("No content in response".to_string()))?;
 
     // Extract Rust code from markdown code blocks

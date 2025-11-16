@@ -51,7 +51,6 @@ struct ComponentDraft {
     prompt: String,
     rust_code: String,
     wasm_base64: Option<String>,
-    js_glue: Option<String>,
     compilation_error: Option<String>,
     created_at: DateTime<Utc>,
 }
@@ -72,7 +71,6 @@ struct ComponentVersion {
     description: String,
     rust_code: String,
     wasm_base64: String,
-    js_glue: String,
     created_at: DateTime<Utc>,
     state_snapshot: Option<serde_json::Value>,
     ai_generated: bool,
@@ -93,7 +91,6 @@ impl VersionHistory {
         description: String,
         rust_code: String,
         wasm_bytes: Vec<u8>,
-        js_glue: String,
         ai_generated: bool,
     ) -> usize {
         let id = self.versions.len();
@@ -103,7 +100,6 @@ impl VersionHistory {
             description,
             rust_code,
             wasm_base64: base64_encode(&wasm_bytes),
-            js_glue,
             created_at: Utc::now(),
             state_snapshot: self.current_state.clone(),
             ai_generated,
@@ -290,7 +286,6 @@ struct DraftInfo {
     iteration: usize,
     prompt: String,
     wasm_base64: Option<String>,
-    js_glue: Option<String>,
     compilation_error: Option<String>,
     has_runtime_error: bool,
 }
@@ -474,12 +469,11 @@ async fn generate_component(
         // Compile
         logs.push("⚙️  Compiling Rust → WASM...".to_string());
         match state.compiler.compile(&rust_code).await {
-            Ok(result) => {
+            Ok(wasm_bytes) => {
                 // SUCCESS! Now save with state preservation (Phase 6)
                 logs.push(format!(
-                    "✅ Compilation successful! {} bytes of WASM + {} bytes of JS glue",
-                    result.wasm_bytes.len(),
-                    result.js_glue.len()
+                    "✅ Compilation successful! {} bytes of WASM",
+                    wasm_bytes.len()
                 ));
                 logs.push(format!("🎉 Component ready after {} iteration(s)", iteration));
 
@@ -494,8 +488,7 @@ async fn generate_component(
                     version_name,
                     version_desc,
                     rust_code,
-                    result.wasm_bytes.clone(),
-                    result.js_glue.clone(),
+                    wasm_bytes.clone(),
                     true, // AI generated
                 );
 
@@ -504,7 +497,7 @@ async fn generate_component(
                     logs.push("🔒 State preserved from previous version!".to_string());
                 }
 
-                let wasm_base64 = base64_encode(&result.wasm_bytes);
+                let wasm_base64 = base64_encode(&wasm_bytes);
 
                 return Ok(Json(GenerateResponse {
                     success: true,
@@ -640,11 +633,10 @@ async fn fix_runtime_error(
         // Compile
         logs.push("⚙️  Compiling fixed Rust → WASM...".to_string());
         match state.compiler.compile(&rust_code).await {
-            Ok(result) => {
+            Ok(wasm_bytes) => {
                 logs.push(format!(
-                    "✅ Compilation successful! {} bytes of WASM + {} bytes of JS glue",
-                    result.wasm_bytes.len(),
-                    result.js_glue.len()
+                    "✅ Compilation successful! {} bytes of WASM",
+                    wasm_bytes.len()
                 ));
                 logs.push(format!("🎉 Fixed component ready after {} iteration(s)", iteration));
 
@@ -659,8 +651,7 @@ async fn fix_runtime_error(
                     version_name,
                     version_desc,
                     rust_code,
-                    result.wasm_bytes.clone(),
-                    result.js_glue.clone(),
+                    wasm_bytes.clone(),
                     true, // AI generated
                 );
 
@@ -669,7 +660,7 @@ async fn fix_runtime_error(
                     logs.push("🔒 State preserved from previous version!".to_string());
                 }
 
-                let wasm_base64 = base64_encode(&result.wasm_bytes);
+                let wasm_base64 = base64_encode(&wasm_bytes);
 
                 return Ok(Json(GenerateResponse {
                     success: true,
@@ -815,30 +806,40 @@ fn extract_rust_code(text: &str) -> Result<String, AppError> {
 
 /// Create system prompt for AI
 fn create_system_prompt() -> String {
-    r##"You are a Rust expert generating simple WebAssembly components that return HTML strings.
+    r#"You are a Rust expert generating simple, reliable WebAssembly components using web-sys and wasm-bindgen.
 
 CRITICAL RULES:
 1. ONLY output Rust code - no explanations, no markdown formatting
-2. DO NOT use web-sys, window, document, or any DOM APIs
-3. ONLY use wasm_bindgen to export a function that returns a String
-4. The function must return static HTML as a String - NO DOM manipulation
-5. Use Tailwind CSS classes in your HTML strings for styling
-6. Keep it SIMPLE - just generate HTML strings
+2. Use web-sys for direct DOM manipulation - NO frameworks like Leptos/Yew
+3. Keep it SIMPLE - basic DOM operations only
+4. Use Tailwind CSS classes in your HTML strings for styling
+5. Always export a render() function that returns the component as HTML string
+6. NO reactivity frameworks - just return HTML
 
 COMPONENT TEMPLATE:
 
 use wasm_bindgen::prelude::*;
+use web_sys::{window, document};
 
 #[wasm_bindgen]
 pub fn render() -> String {
-    r#"<div class="p-6 max-w-2xl mx-auto">
-    <h1 class="text-4xl font-bold text-gray-900 mb-4">Simple Component</h1>
-    <button 
-        onclick="alert('Clicked!')"
-        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-        Click Me
-    </button>
-</div>"#.to_string()
+    let doc = window().unwrap().document().unwrap();
+    let body = doc.body().unwrap();
+    
+    // Create simple HTML with Tailwind classes
+    let html = r#"
+        <div class="p-6 max-w-2xl mx-auto">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Simple Component</h1>
+            <button 
+                onclick="alert('Clicked!')"
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Click Me
+            </button>
+        </div>
+    "#;
+    
+    body.set_inner_html(html);
+    html.to_string()
 }
 
 TAILWIND CSS CLASSES (use these for styling):
@@ -866,38 +867,44 @@ Typography:
 
 EXAMPLES:
 
-Example 1 - Simple Button:
-use wasm_bindgen::prelude::*;
-
+Simple Button:
 #[wasm_bindgen]
 pub fn render() -> String {
-    r#"<div class="p-6 max-w-2xl mx-auto">
-    <button class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        Click Me
-    </button>
-</div>"#.to_string()
+    let doc = window().unwrap().document().unwrap();
+    let body = doc.body().unwrap();
+    
+    body.set_inner_html(r#"
+        <div class="p-6 max-w-2xl mx-auto">
+            <button class="px-6 py-3 bg-blue-600 text-white rounded-lg">Click Me</button>
+        </div>
+    "#);
+    "rendered".to_string()
 }
 
-Example 2 - Simple List:
-use wasm_bindgen::prelude::*;
-
+Static List:
 #[wasm_bindgen]
 pub fn render() -> String {
-    r#"<div class="p-6 max-w-2xl mx-auto">
-    <h1 class="text-4xl font-bold mb-6">My List</h1>
-    <ul class="space-y-2">
-        <li class="p-4 bg-white rounded-lg shadow">Item 1</li>
-        <li class="p-4 bg-white rounded-lg shadow">Item 2</li>
-    </ul>
-</div>"#.to_string()
+    let doc = window().unwrap().document().unwrap();
+    let body = doc.body().unwrap();
+    
+    body.set_inner_html(r#"
+        <div class="p-6 max-w-2xl mx-auto">
+            <h1 class="text-4xl font-bold mb-6">My List</h1>
+            <ul class="space-y-2">
+                <li class="p-4 bg-white rounded-lg shadow">Item 1</li>
+                <li class="p-4 bg-white rounded-lg shadow">Item 2</li>
+            </ul>
+        </div>
+    "#);
+    "rendered".to_string()
 }
 
 IMPORTANT:
-- Just return HTML strings - NO web-sys, NO document, NO DOM APIs
+- Keep HTML simple - NO complex JavaScript
 - Use Tailwind classes for all styling
-- Keep HTML simple and static
-- ONLY use wasm_bindgen to export the function
-- ONLY output Rust code, no explanations"##
+- Return "rendered" or similar string
+- Set inner_html on body element
+- ONLY output Rust code, no explanations"#
         .to_string()
 }
 
@@ -1077,9 +1084,6 @@ async fn design_commit(
     // Ensure the draft compiled successfully
     let wasm_base64 = current_draft.wasm_base64.as_ref()
         .ok_or_else(|| AppError::ApiError("Current draft has compilation errors. Fix them before committing.".to_string()))?;
-    
-    let js_glue = current_draft.js_glue.as_ref()
-        .ok_or_else(|| AppError::ApiError("Current draft missing JS glue. Fix compilation errors first.".to_string()))?;
 
     // Decode WASM
     let wasm_bytes = base64_decode(wasm_base64)?;
@@ -1094,7 +1098,6 @@ async fn design_commit(
         commit_message,
         current_draft.rust_code.clone(),
         wasm_bytes.clone(),
-        js_glue.clone(),
         true,
     );
 
@@ -1197,9 +1200,9 @@ async fn generate_draft(
         // Try to compile
         logs.push("⚙️  Compiling...".to_string());
         match state.compiler.compile(&rust_code).await {
-            Ok(result) => {
+            Ok(wasm_bytes) => {
                 // SUCCESS! Return the working draft
-                logs.push(format!("✅ Compiled successfully! {} bytes WASM + {} bytes JS", result.wasm_bytes.len(), result.js_glue.len()));
+                logs.push(format!("✅ Compiled successfully! {} bytes", wasm_bytes.len()));
                 if attempt > 1 {
                     logs.push(format!("🎉 Success after {} attempts", attempt));
                 }
@@ -1208,8 +1211,7 @@ async fn generate_draft(
                     iteration,
                     prompt: prompt.to_string(),
                     rust_code,
-                    wasm_base64: Some(base64_encode(&result.wasm_bytes)),
-                    js_glue: Some(result.js_glue),
+                    wasm_base64: Some(base64_encode(&wasm_bytes)),
                     compilation_error: None,
                     created_at: Utc::now(),
                 };
@@ -1242,7 +1244,6 @@ async fn generate_draft(
                         prompt: prompt.to_string(),
                         rust_code,
                         wasm_base64: None,
-                        js_glue: None,
                         compilation_error: Some(error_msg),
                         created_at: Utc::now(),
                     };
@@ -1263,7 +1264,6 @@ fn create_draft_info(draft: &ComponentDraft) -> DraftInfo {
         iteration: draft.iteration,
         prompt: draft.prompt.clone(),
         wasm_base64: draft.wasm_base64.clone(),
-        js_glue: draft.js_glue.clone(),
         compilation_error: draft.compilation_error.clone(),
         has_runtime_error: false, // Frontend will update this
     }

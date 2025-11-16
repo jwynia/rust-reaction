@@ -276,7 +276,7 @@ panic = "abort"
 
 #[async_trait]
 impl Compiler for SubprocessCompiler {
-    async fn compile(&self, source: &str) -> Result<Vec<u8>> {
+    async fn compile(&self, source: &str) -> Result<crate::CompilationResult> {
         // Check tools are available
         Self::check_tools()?;
 
@@ -315,10 +315,19 @@ impl Compiler for SubprocessCompiler {
             MorpheusError::CompilationError(format!("Failed to read compiled WASM: {}", e))
         })?;
 
+        // Read JavaScript glue code
+        let js_path = project_dir.join("pkg/morpheus_component.js");
+        let js_glue = fs::read_to_string(&js_path).await.map_err(|e| {
+            MorpheusError::CompilationError(format!("Failed to read JS glue code: {}", e))
+        })?;
+
         // Clean up temporary directory (optional - could cache)
         let _ = fs::remove_dir_all(&project_dir).await;
 
-        Ok(wasm_bytes)
+        Ok(crate::CompilationResult {
+            wasm_bytes,
+            js_glue,
+        })
     }
 
     async fn check(&self, source: &str) -> Result<()> {
@@ -388,10 +397,12 @@ mod tests {
         }
 
         match compiler.compile(HELLO_WORLD).await {
-            Ok(wasm) => {
+            Ok(result) => {
                 println!("✓ Compiled successfully!");
-                println!("  WASM size: {} bytes", wasm.len());
-                assert!(!wasm.is_empty());
+                println!("  WASM size: {} bytes", result.wasm_bytes.len());
+                println!("  JS glue size: {} bytes", result.js_glue.len());
+                assert!(!result.wasm_bytes.is_empty());
+                assert!(!result.js_glue.is_empty());
             }
             Err(e) => {
                 println!("✗ Compilation failed: {}", e);
